@@ -40,6 +40,11 @@ class MainActivity : AppCompatActivity() {
             login()
         }
 
+        if (auth.currentUser != null){
+            val intent = Intent(this, StartActivity::class.java)
+            startActivity(intent)
+        }
+
     }
 
     fun login(){
@@ -58,7 +63,7 @@ class MainActivity : AppCompatActivity() {
                     startActivity(intent)
 
                 } else {
-                    Log.d("!!!", "user not created ${task.exception}")
+                    Log.d("!!!", "user not logged in ${task.exception}")
                 }
             }
     }

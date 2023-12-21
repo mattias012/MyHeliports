@@ -7,17 +7,31 @@
     android:background="#FFFFFF"
     tools:context=".StartActivity">
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/addItemButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:clickable="true"
+        android:src="@android:drawable/ic_input_add"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <LinearLayout
+        android:id="@+id/linearLayout"
         android:layout_width="415dp"
         android:layout_height="85dp"
-        android:background="#F14848"
+        android:background="#D6D6D6"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"></LinearLayout>
+        app:layout_constraintStart_toStartOf="parent">
+
+    </LinearLayout>
 
     <FrameLayout
-        android:id="@+id/frameLayout"
+        android:id="@+id/container"
         android:layout_width="412dp"
         android:layout_height="644dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -27,31 +41,34 @@
     </FrameLayout>
 
     <ImageButton
-        android:id="@+id/imageButton7"
+        android:id="@+id/mapIcon"
         android:layout_width="70dp"
         android:layout_height="70dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toBottomOf="@+id/linearLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/linearLayout"
         app:srcCompat="@drawable/baseline_map_24" />
 
     <ImageButton
-        android:id="@+id/imageButton8"
+        android:id="@+id/usersIcon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
         android:src="@drawable/baseline_groups_2_24"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/linearLayout" />
 
     <ImageButton
-        android:id="@+id/imageButton4"
+        android:id="@+id/listIcon"
         android:layout_width="70dp"
         android:layout_height="70dp"
         android:layout_marginStart="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/linearLayout"
         app:srcCompat="@drawable/baseline_format_list_bulleted_24" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

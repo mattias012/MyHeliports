@@ -6,7 +6,10 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageButton
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -19,10 +22,17 @@ class AddLocationActivity : AppCompatActivity() {
     lateinit var auth: FirebaseAuth
 
     lateinit var backButton: AppCompatImageButton
-    lateinit var nameOfLocationView: EditText
-    lateinit var descriptionOfLocationView: EditText
-    lateinit var latOfLocationView: EditText
-    lateinit var longOfLocationView: EditText
+
+    lateinit var nameOfLocation: TextInputEditText
+    lateinit var descriptionOfLocation: TextInputEditText
+    lateinit var latOfLocation: TextInputEditText
+    lateinit var longOfLocation: TextInputEditText
+
+    lateinit var nameOfLocationView: TextInputLayout
+    lateinit var descriptionOfLocationView: TextInputLayout
+    lateinit var latOfLocationView: TextInputLayout
+    lateinit var longOfLocationView: TextInputLayout
+
     lateinit var saveLocationButton: Button
 
 
@@ -34,10 +44,17 @@ class AddLocationActivity : AppCompatActivity() {
         auth = Firebase.auth
 
         backButton = findViewById(R.id.backButton)
+
         nameOfLocationView = findViewById(R.id.nameOfLocationView)
         descriptionOfLocationView = findViewById(R.id.descriptionOfLocationView)
         latOfLocationView = findViewById(R.id.latOfLocationView)
         longOfLocationView = findViewById(R.id.longOfLocationView)
+
+        nameOfLocation = findViewById(R.id.nameOfLocation)
+        descriptionOfLocation = findViewById(R.id.descriptionOfLocation)
+        latOfLocation = findViewById(R.id.latOfLocation)
+        longOfLocation = findViewById(R.id.longOfLocation)
+
         saveLocationButton = findViewById(R.id.saveLocationButton)
 
 
@@ -53,8 +70,8 @@ class AddLocationActivity : AppCompatActivity() {
 
     fun saveLocation() {
 
-        val lat = latOfLocationView.text.toString()
-        val long = longOfLocationView.text.toString()
+        val lat = latOfLocation.text.toString()
+        val long = longOfLocation.text.toString()
 
         val checkCoordinates = checkLatLong(lat, long)
 
@@ -62,25 +79,25 @@ class AddLocationActivity : AppCompatActivity() {
         val colorStateListWhite = ColorStateList.valueOf(Color.WHITE)
 
         if (!checkCoordinates) {
-            latOfLocationView.backgroundTintList = colorStateListRed
-            longOfLocationView.backgroundTintList = colorStateListRed
+            latOfLocationView.error = getString(R.string.error)
+            longOfLocationView.error = getString(R.string.error)
             return
         }
         else {
-            latOfLocationView.backgroundTintList = colorStateListWhite
-            longOfLocationView.backgroundTintList = colorStateListWhite
+            latOfLocationView.error = null
+            longOfLocationView.error = null
         }
 
         val latDouble = lat.toDouble()
         val longDouble = long.toDouble()
 
         //Create Location Object
-        val location = Location("??",
-            nameOfLocationView.text.toString(),
-            descriptionOfLocationView.text.toString(),
-            latDouble,
-            longDouble,
-            "greenland"
+        val location = Location(
+            name= nameOfLocation.text.toString(),
+            description = descriptionOfLocation.text.toString(),
+            lat = latDouble,
+            long = longDouble,
+            imageLink = "greenland"
         )
 
         val user = auth.currentUser ?: return

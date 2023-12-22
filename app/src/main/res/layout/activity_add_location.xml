@@ -6,73 +6,121 @@
     android:layout_height="match_parent"
     tools:context=".AddLocationActivity">
 
-    <EditText
-        android:id="@+id/longOfLocationView"
-        android:layout_width="132dp"
-        android:layout_height="67dp"
-        android:layout_marginStart="4dp"
-        android:layout_marginTop="57dp"
-        android:ems="10"
-        android:hint="Longitude"
-        android:inputType="text"
-        app:layout_constraintStart_toEndOf="@+id/latOfLocationView"
-        app:layout_constraintTop_toBottomOf="@+id/descriptionOfLocationView" />
-
-    <EditText
+    <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/nameOfLocationView"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="104dp"
-        android:ems="10"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         android:hint="Name of location"
-        android:inputType="text"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:endIconMode="clear_text"
+        app:layout_constraintTop_toBottomOf="@+id/backButton">
 
-    <EditText
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/nameOfLocation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+             />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/descriptionOfLocationView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:hint="Description"
+        app:endIconMode="clear_text"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/nameOfLocationView">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/descriptionOfLocation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/latOfLocationView"
-        android:layout_width="96dp"
-        android:layout_height="68dp"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="57dp"
-        android:ems="10"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
         android:hint="Latitude"
-        android:inputType="text"
+        app:endIconMode="clear_text"
+        app:layout_constraintEnd_toStartOf="@+id/longOfLocationView"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/descriptionOfLocationView" />
+        app:layout_constraintTop_toBottomOf="@+id/descriptionOfLocationView">
 
-    <Button
-        android:id="@+id/button"
-        style="@style/Widget.AppCompat.Button"
-        android:layout_width="130dp"
-        android:layout_height="105dp"
-        android:layout_marginTop="33dp"
-        android:layout_marginEnd="8dp"
-        android:text="Use present location"
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/latOfLocation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/longOfLocationView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:hint="Longitude"
+        app:endIconMode="clear_text"
+        app:errorEnabled="true"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/descriptionOfLocationView" />
+        app:layout_constraintStart_toEndOf="@+id/latOfLocationView"
+        app:layout_constraintTop_toBottomOf="@+id/descriptionOfLocationView">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/longOfLocation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+    <!--    <Button-->
+    <!--        android:id="@+id/button"-->
+    <!--        style="@style/Widget.AppCompat.Button"-->
+    <!--        android:layout_width="130dp"-->
+    <!--        android:layout_height="105dp"-->
+    <!--        android:layout_marginTop="33dp"-->
+    <!--        android:layout_marginEnd="8dp"-->
+    <!--        android:text="Use present location"-->
+    <!--        app:layout_constraintEnd_toEndOf="parent"-->
+    <!-- />-->
+
+    <!--&lt;!&ndash;    <ImageView&ndash;&gt;-->
+    <!--&lt;!&ndash;        android:id="@+id/imageView"&ndash;&gt;-->
+    <!--&lt;!&ndash;        android:layout_width="149dp"&ndash;&gt;-->
+    <!--&lt;!&ndash;        android:layout_height="161dp"&ndash;&gt;-->
+    <!--&lt;!&ndash;        android:layout_marginTop="64dp"&ndash;&gt;-->
+    <!--&lt;!&ndash;        android:src="@android:drawable/ic_menu_camera"&ndash;&gt;-->
+    <!--&lt;!&ndash;        app:layout_constraintEnd_toEndOf="parent"&ndash;&gt;-->
+    <!--&lt;!&ndash;        app:layout_constraintStart_toStartOf="parent"&ndash;&gt;-->
+    <!--        app:layout_constraintTop_toBottomOf="@+id/button" />-->
 
     <Button
         android:id="@+id/saveLocationButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="77dp"
+        android:layout_marginBottom="80dp"
         android:text="Save Location"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageView" />
-
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="149dp"
-        android:layout_height="161dp"
-        android:layout_marginTop="64dp"
-        android:src="@android:drawable/ic_menu_camera"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button" />
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <ImageButton
         android:id="@+id/backButton"
@@ -86,25 +134,15 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:text="Add a new location"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <!--    <TextView-->
+    <!--        android:id="@+id/textView2"-->
+    <!--        android:layout_width="wrap_content"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:layout_marginTop="32dp"-->
+    <!--        android:text="Add a new location"-->
+    <!--        app:layout_constraintEnd_toEndOf="parent"-->
+    <!--        app:layout_constraintStart_toStartOf="parent"-->
+    <!--        app:layout_constraintTop_toTopOf="parent" />-->
 
-    <EditText
-        android:id="@+id/descriptionOfLocationView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="27dp"
-        android:ems="10"
-        android:hint="Description"
-        android:inputType="text"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/nameOfLocationView" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

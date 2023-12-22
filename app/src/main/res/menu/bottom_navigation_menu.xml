@@ -1,0 +1,17 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/item_1"
+        android:enabled="true"
+        android:icon="@drawable/baseline_format_list_bulleted_24"
+        android:title="List"/>
+    <item
+        android:id="@+id/item_2"
+        android:enabled="true"
+        android:icon="@drawable/baseline_map_24"
+        android:title="Map"/>
+    <item
+        android:id="@+id/item_3"
+        android:enabled="true"
+        android:icon="@drawable/baseline_groups_2_24"
+        android:title="Users"/>
+</menu>

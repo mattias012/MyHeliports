@@ -19,6 +19,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import android.Manifest
+import android.content.ContentValues
 import android.content.Intent
 import android.provider.MediaStore
 import android.widget.ImageView
@@ -40,6 +41,7 @@ import androidx.lifecycle.LifecycleOwner
 
 import androidx.lifecycle.observe
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.appbar.MaterialToolbar
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -56,7 +58,7 @@ class AddLocationActivity : AppCompatActivity() {
     lateinit var db: FirebaseFirestore
     lateinit var auth: FirebaseAuth
 
-    lateinit var backButton: AppCompatImageButton
+//    lateinit var backButton: AppCompatImageButton
 
     lateinit var nameOfLocation: TextInputEditText
     lateinit var descriptionOfLocation: TextInputEditText
@@ -75,6 +77,8 @@ class AddLocationActivity : AppCompatActivity() {
 
     private lateinit var currentPhotoPath: String
 
+    private var photoFile: File? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,7 +87,7 @@ class AddLocationActivity : AppCompatActivity() {
         db = Firebase.firestore
         auth = Firebase.auth
 
-        backButton = findViewById(R.id.backButton)
+//        backButton = findViewById(R.id.backButton)
 
         nameOfLocationView = findViewById(R.id.nameOfLocationView)
         descriptionOfLocationView = findViewById(R.id.descriptionOfLocationView)
@@ -116,12 +120,28 @@ class AddLocationActivity : AppCompatActivity() {
         }
 
 
-        backButton.setOnClickListener {
-            finish()
-        }
+//        backButton.setOnClickListener {
+//            finish()
+//        }
 
         saveLocationButton.setOnClickListener {
             saveLocation()
+        }
+
+        val topAppBar = findViewById<MaterialToolbar>(R.id.topAppBar)
+        topAppBar.setNavigationOnClickListener {
+            finish()
+        }
+
+        topAppBar.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.user -> {
+                    // Handle favorite icon press
+                    true
+                }
+                else -> false
+
+            }
         }
 
     }
@@ -182,8 +202,7 @@ class AddLocationActivity : AppCompatActivity() {
         val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         if (cameraIntent.resolveActivity(packageManager) != null) {
             // Create the file where the photo should go
-            val photoFile: File? = try {
-
+            photoFile = try {
                 createImageFile()
             } catch (ex: IOException) {
                 // Error occurred while creating the File
@@ -219,11 +238,12 @@ class AddLocationActivity : AppCompatActivity() {
         currentPhotoPath = imageFile.absolutePath
         Log.d("PhotoPath", "Current Photo Path: $currentPhotoPath")
 
-        // Notify the system to add the photo to the gallery
-        val mediaScanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
-        val contentUri = Uri.fromFile(imageFile)
-        mediaScanIntent.data = contentUri
-        sendBroadcast(mediaScanIntent)
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DATA, imageFile.absolutePath)
+            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+            put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis())
+        }
+        contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
 
         return imageFile
     }
@@ -236,6 +256,20 @@ class AddLocationActivity : AppCompatActivity() {
                     // Handle the selected image from the gallery
                     data?.data?.let { uri ->
                         photoViewModel.setPhotoUri(uri)
+                    }
+                }
+            }
+            REQUEST_CAMERA -> {
+                if (resultCode == RESULT_OK) {
+                    // Handle the photo taken by the camera
+                    // Since you already provided the URI when starting the camera intent,
+                    // you don't need to get it from the data, but can use the one you already have.
+                    photoFile?.let {
+                        val photoUri = Uri.fromFile(it)
+                        photoViewModel.setPhotoUri(photoUri)
+                    } ?: run {
+                        // Handle the case where photoFile is null
+                        Log.e("Camera", "Photo file is unexpectedly null")
                     }
                 }
             }
@@ -271,6 +305,7 @@ class AddLocationActivity : AppCompatActivity() {
             description = descriptionOfLocation.text.toString(),
             lat = latDouble,
             long = longDouble,
+            rating = 3,
             imageLink = "greenland"
         )
 

@@ -13,6 +13,7 @@ data class Location(
     var description: String? = null,
     var lat: Double? = null,
     var long: Double? = null,
+    var rating: Int? = null,
     var imageLink: String? = null,
 
     @ServerTimestamp

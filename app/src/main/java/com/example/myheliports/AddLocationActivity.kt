@@ -34,6 +34,7 @@ import java.util.Date
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.text.Selection.setSelection
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AlertDialog
@@ -45,6 +46,7 @@ import androidx.lifecycle.lifecycleScope
 import com.drew.imaging.ImageMetadataReader
 import com.drew.metadata.exif.GpsDirectory
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.datepicker.MaterialDatePicker
 import kotlinx.coroutines.launch
 import java.lang.ref.ReferenceQueue
 import java.util.*
@@ -67,11 +69,13 @@ class AddLocationActivity : AppCompatActivity() {
     lateinit var auth: FirebaseAuth
 
     lateinit var nameOfLocation: TextInputEditText
+    lateinit var dateOfPhoto: TextInputEditText
     lateinit var descriptionOfLocation: TextInputEditText
     lateinit var latOfLocation: TextInputEditText
     lateinit var longOfLocation: TextInputEditText
 
     lateinit var nameOfLocationView: TextInputLayout
+    lateinit var dateOfPhotoView: TextInputLayout
     lateinit var descriptionOfLocationView: TextInputLayout
     lateinit var latOfLocationView: TextInputLayout
     lateinit var longOfLocationView: TextInputLayout
@@ -93,19 +97,7 @@ class AddLocationActivity : AppCompatActivity() {
         db = Firebase.firestore
         auth = Firebase.auth
 
-        nameOfLocationView = findViewById(R.id.nameOfLocationView)
-        descriptionOfLocationView = findViewById(R.id.descriptionOfLocationView)
-        latOfLocationView = findViewById(R.id.latOfLocationView)
-        longOfLocationView = findViewById(R.id.longOfLocationView)
-
-        nameOfLocation = findViewById(R.id.nameOfLocation)
-        descriptionOfLocation = findViewById(R.id.descriptionOfLocation)
-        latOfLocation = findViewById(R.id.latOfLocation)
-        longOfLocation = findViewById(R.id.longOfLocation)
-
-        saveLocationButton = findViewById(R.id.saveLocationButton)
-
-        imageView = findViewById(R.id.imageView)
+        initializeViews()
 
         requestPermission()
 
@@ -113,15 +105,25 @@ class AddLocationActivity : AppCompatActivity() {
             showImagePickerDialog()
         }
 
-        photoViewModel = ViewModelProvider(this).get(PhotoViewModel::class.java)
+        showPhotoView()
 
-        // Observe changes in the photoLiveData
-        photoViewModel.photoLiveData.observe(this) { uri ->
-            // Update the imageView with the selected or captured image
-            imageView.setImageURI(uri)
-            // Set the ScaleType to fit the width or height of the image
-            imageView.scaleType = ImageView.ScaleType.FIT_XY
+        dateOfPhotoView.setEndIconOnClickListener {
+            val datePicker =
+                MaterialDatePicker.Builder.datePicker()
+                    .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
+                    .setInputMode(MaterialDatePicker.INPUT_MODE_TEXT)
+                    .setTitleText("Select date")
+                    .build()
+
+            datePicker.addOnPositiveButtonClickListener { selection ->
+                val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                val dateString = sdf.format(Date(selection))
+                dateOfPhoto.setText(dateString)
+            }
+
+            datePicker.show(supportFragmentManager, "tag")
         }
+
 
         saveLocationButton.setOnClickListener {
             saveLocation()
@@ -144,12 +146,21 @@ class AddLocationActivity : AppCompatActivity() {
         }
 
     }
-    fun requestPermission() {
+    private fun showPhotoView(){
+        photoViewModel = ViewModelProvider(this).get(PhotoViewModel::class.java)
+
+        // Observe changes in the photoLiveData
+        photoViewModel.photoLiveData.observe(this) { uri ->
+            // Update the imageView with the selected or captured image
+            imageView.setImageURI(uri)
+            // Set the ScaleType to fit the width or height of the image
+            imageView.scaleType = ImageView.ScaleType.FIT_XY
+        }
+    }
+    private fun requestPermission() {
         // Check for camera and storage permissions
-        if (checkPermissions()) {
-            // Show a dialog to let the user choose between camera and gallery
-            showImagePickerDialog()
-        } else {
+        if (!checkPermissions()) {
+
             // Request permissions
             ActivityCompat.requestPermissions(
                 this,
@@ -238,15 +249,15 @@ class AddLocationActivity : AppCompatActivity() {
 
     private fun createImageFile(): File {
         // Check for storage permission
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // Permission is not granted, request it
-            requestPermission()
-            throw SecurityException("WRITE_EXTERNAL_STORAGE permission not granted")
-        }
+//        if (ContextCompat.checkSelfPermission(
+//                this,
+//                Manifest.permission.WRITE_EXTERNAL_STORAGE
+//            ) != PackageManager.PERMISSION_GRANTED
+//        ) {
+//            // Permission is not granted, request it
+//            requestPermission()
+//            throw SecurityException("WRITE_EXTERNAL_STORAGE permission not granted")
+//        }
 
         // Create an image file name
         val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
@@ -276,15 +287,15 @@ class AddLocationActivity : AppCompatActivity() {
 
     fun extractExifData(photoPath: String? = null, uri: Uri? = null) {
 
-        // Check for storage permission
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_MEDIA_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) else {
-            // Permission is not granted, request it
-            requestPermission()
-        }
+//        // Check for storage permission
+//        if (ContextCompat.checkSelfPermission(
+//                this,
+//                Manifest.permission.ACCESS_MEDIA_LOCATION
+//            ) != PackageManager.PERMISSION_GRANTED
+//        ) else {
+//            // Permission is not granted, request it
+//            requestPermission()
+//        }
 
         val exifInterface = when {
             photoPath != null -> ExifInterface(photoPath)
@@ -298,6 +309,10 @@ class AddLocationActivity : AppCompatActivity() {
 
         // Extract date
         val dateTaken = exifInterface.getAttribute(ExifInterface.TAG_DATETIME)
+
+        if (!dateTaken.isNullOrBlank()){
+
+        }
 
         // Extract location
         val latLong = FloatArray(2)
@@ -372,6 +387,7 @@ class AddLocationActivity : AppCompatActivity() {
         //Create Location Object
         val location = Location(
             name= nameOfLocation.text.toString(),
+            dateOfPhoto = Date(),
             description = descriptionOfLocation.text.toString(),
             lat = latDouble,
             long = longDouble,
@@ -402,5 +418,23 @@ class AddLocationActivity : AppCompatActivity() {
             //Catch errors..
         }
         return false
+    }
+
+    private fun initializeViews(){
+        nameOfLocationView = findViewById(R.id.nameOfLocationView)
+        dateOfPhotoView = findViewById(R.id.dateOfPhotoView)
+        descriptionOfLocationView = findViewById(R.id.descriptionOfLocationView)
+        latOfLocationView = findViewById(R.id.latOfLocationView)
+        longOfLocationView = findViewById(R.id.longOfLocationView)
+
+        nameOfLocation = findViewById(R.id.nameOfLocation)
+        dateOfPhoto = findViewById(R.id.dateOfPhoto)
+        descriptionOfLocation = findViewById(R.id.descriptionOfLocation)
+        latOfLocation = findViewById(R.id.latOfLocation)
+        longOfLocation = findViewById(R.id.longOfLocation)
+
+        saveLocationButton = findViewById(R.id.saveLocationButton)
+
+        imageView = findViewById(R.id.imageView)
     }
 }

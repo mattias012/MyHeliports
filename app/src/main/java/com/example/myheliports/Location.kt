@@ -9,6 +9,7 @@ import java.util.Locale
 data class Location(
     @DocumentId
     var documentId : String? = null,
+    var dateOfPhoto: Date? = null,
     var name: String? = null,
     var description: String? = null,
     var lat: Double? = null,

@@ -21,6 +21,7 @@ import com.google.firebase.ktx.Firebase
 import android.Manifest
 import android.content.ContentValues
 import android.content.Intent
+import android.media.ExifInterface
 import android.provider.MediaStore
 import android.widget.ImageView
 import androidx.core.content.FileProvider
@@ -41,8 +42,11 @@ import androidx.lifecycle.LifecycleOwner
 
 import androidx.lifecycle.observe
 import androidx.lifecycle.lifecycleScope
+import com.drew.imaging.ImageMetadataReader
+import com.drew.metadata.exif.GpsDirectory
 import com.google.android.material.appbar.MaterialToolbar
 import kotlinx.coroutines.launch
+import java.lang.ref.ReferenceQueue
 import java.util.*
 
 
@@ -50,15 +54,17 @@ class AddLocationActivity : AppCompatActivity() {
 
 
     companion object {
-        private const val REQUEST_CAMERA_PERMISSION = 100
+        private const val REQUEST_ALL_PERMISSIONS = 100
         private const val REQUEST_GALLERY = 200
         private const val REQUEST_CAMERA = 300
+        private const val REQUEST_MEDIA_LOCATION = 400
+        private const val REQUEST_READ = 500
+        private const val REQUEST_WRITE = 600
+
     }
 
     lateinit var db: FirebaseFirestore
     lateinit var auth: FirebaseAuth
-
-//    lateinit var backButton: AppCompatImageButton
 
     lateinit var nameOfLocation: TextInputEditText
     lateinit var descriptionOfLocation: TextInputEditText
@@ -86,8 +92,6 @@ class AddLocationActivity : AppCompatActivity() {
 
         db = Firebase.firestore
         auth = Firebase.auth
-
-//        backButton = findViewById(R.id.backButton)
 
         nameOfLocationView = findViewById(R.id.nameOfLocationView)
         descriptionOfLocationView = findViewById(R.id.descriptionOfLocationView)
@@ -118,11 +122,6 @@ class AddLocationActivity : AppCompatActivity() {
             // Set the ScaleType to fit the width or height of the image
             imageView.scaleType = ImageView.ScaleType.FIT_XY
         }
-
-
-//        backButton.setOnClickListener {
-//            finish()
-//        }
 
         saveLocationButton.setOnClickListener {
             saveLocation()
@@ -156,9 +155,12 @@ class AddLocationActivity : AppCompatActivity() {
                 this,
                 arrayOf(
                     Manifest.permission.CAMERA,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                    Manifest.permission.ACCESS_MEDIA_LOCATION
                 ),
-                REQUEST_CAMERA_PERMISSION
+                REQUEST_ALL_PERMISSIONS
             )
         }
     }
@@ -171,6 +173,18 @@ class AddLocationActivity : AppCompatActivity() {
                 ContextCompat.checkSelfPermission(
                     this,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                ) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_MEDIA_LOCATION
                 ) == PackageManager.PERMISSION_GRANTED
     }
 
@@ -223,6 +237,17 @@ class AddLocationActivity : AppCompatActivity() {
     }
 
     private fun createImageFile(): File {
+        // Check for storage permission
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // Permission is not granted, request it
+            requestPermission()
+            throw SecurityException("WRITE_EXTERNAL_STORAGE permission not granted")
+        }
+
         // Create an image file name
         val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
@@ -245,8 +270,55 @@ class AddLocationActivity : AppCompatActivity() {
         }
         contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
 
+
         return imageFile
     }
+
+    fun extractExifData(photoPath: String? = null, uri: Uri? = null) {
+
+        // Check for storage permission
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_MEDIA_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) else {
+            // Permission is not granted, request it
+            requestPermission()
+        }
+
+        val exifInterface = when {
+            photoPath != null -> ExifInterface(photoPath)
+            uri != null -> {
+                val inputStream = contentResolver.openInputStream(uri)
+                ExifInterface(inputStream!!)
+
+            }
+            else -> throw IllegalArgumentException("Both photoPath and uri cannot be null")
+        }
+
+        // Extract date
+        val dateTaken = exifInterface.getAttribute(ExifInterface.TAG_DATETIME)
+
+        // Extract location
+        val latLong = FloatArray(2)
+        val hasLatLong = exifInterface.getLatLong(latLong)
+
+        if (hasLatLong) {
+
+            val latitude = latLong[0]
+            val longitude = latLong[1]
+
+//            val latitude = exifInterface.getAttribute(ExifInterface.TAG_GPS_LATITUDE)
+//            val longitude = exifInterface.getAttribute(ExifInterface.TAG_GPS_LONGITUDE)
+
+            Log.d("ExifData", "Date: $dateTaken, Latitude: $latitude, Longitude: $longitude")
+
+            latOfLocation.setText(latitude.toString())
+            longOfLocation.setText(longitude.toString())
+
+        }
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -256,17 +328,18 @@ class AddLocationActivity : AppCompatActivity() {
                     // Handle the selected image from the gallery
                     data?.data?.let { uri ->
                         photoViewModel.setPhotoUri(uri)
+                        extractExifData(null, uri)
                     }
                 }
             }
             REQUEST_CAMERA -> {
                 if (resultCode == RESULT_OK) {
                     // Handle the photo taken by the camera
-                    // Since you already provided the URI when starting the camera intent,
-                    // you don't need to get it from the data, but can use the one you already have.
                     photoFile?.let {
                         val photoUri = Uri.fromFile(it)
                         photoViewModel.setPhotoUri(photoUri)
+                        // Extract EXIF data from the camera image
+                        extractExifData(it.absolutePath, null)
                     } ?: run {
                         // Handle the case where photoFile is null
                         Log.e("Camera", "Photo file is unexpectedly null")
@@ -282,9 +355,6 @@ class AddLocationActivity : AppCompatActivity() {
         val long = longOfLocation.text.toString()
 
         val checkCoordinates = checkLatLong(lat, long)
-
-        val colorStateListRed = ColorStateList.valueOf(Color.RED)
-        val colorStateListWhite = ColorStateList.valueOf(Color.WHITE)
 
         if (!checkCoordinates) {
             latOfLocationView.error = getString(R.string.error)

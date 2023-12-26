@@ -9,13 +9,13 @@
 <!--        app:showAsAction="ifRoom"-->
 <!--        />-->
 
-<!--    <item-->
-<!--        android:id="@+id/backs"-->
-<!--        android:icon="@drawable/baseline_arrow_back_ios_24"-->
-<!--        android:title="Back"-->
-<!--        android:contentDescription="Close this window"-->
-<!--        app:showAsAction="ifRoom"-->
-<!--        />-->
+    <item
+        android:id="@+id/help"
+        android:icon="@drawable/baseline_help_24"
+        android:title="Help"
+        android:contentDescription="Help"
+        app:showAsAction="ifRoom"
+        />
 
 
     <item

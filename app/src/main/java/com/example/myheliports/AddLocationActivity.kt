@@ -1,14 +1,9 @@
 package com.example.myheliports
 
 import android.content.pm.PackageManager
-import android.content.res.ColorStateList
-import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
-import androidx.appcompat.widget.AppCompatImageButton
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.material.textfield.TextInputEditText
@@ -19,9 +14,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import android.Manifest
-import android.app.ProgressDialog
 import android.content.ContentValues
-import android.content.ContentValues.TAG
 import android.content.Intent
 import android.media.ExifInterface
 import android.provider.MediaStore
@@ -34,27 +27,17 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
-import android.text.Selection.setSelection
 import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.core.net.toUri
-import androidx.lifecycle.LifecycleOwner
-
-import androidx.lifecycle.observe
-import androidx.lifecycle.lifecycleScope
-import com.drew.imaging.ImageMetadataReader
-import com.drew.metadata.exif.GpsDirectory
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.datepicker.MaterialDatePicker
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.Timestamp
 import com.google.firebase.storage.FirebaseStorage
-import kotlinx.coroutines.launch
-import java.lang.ref.ReferenceQueue
 import java.util.*
 
 
@@ -71,10 +54,10 @@ class AddLocationActivity : AppCompatActivity() {
 
     }
 
-    lateinit var db: FirebaseFirestore
-    lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
+    private lateinit var auth: FirebaseAuth
 
-    lateinit var storage: FirebaseStorage
+    private lateinit var storage: FirebaseStorage
 
     lateinit var nameOfLocation: TextInputEditText
     lateinit var dateOfPhoto: TextInputEditText
@@ -129,7 +112,7 @@ class AddLocationActivity : AppCompatActivity() {
 
         saveLocationButton.setOnClickListener {
             saveLocation()
-            it.isEnabled = false
+
         }
 
         val topAppBar = findViewById<MaterialToolbar>(R.id.topAppBar)
@@ -140,10 +123,21 @@ class AddLocationActivity : AppCompatActivity() {
         topAppBar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.user -> {
-                    // Handle favorite icon press
+
                     true
                 }
+                R.id.help -> {
 
+                    MaterialAlertDialogBuilder(this@AddLocationActivity)
+                        .setTitle("How to add a location")
+                        .setMessage("Add a new spot to your logbook. If you select a photo we'll extract the data from the image to help you out.")
+                        .setNeutralButton("OK") { dialog, which ->
+                            // Respond to neutral button press
+                        }
+                        .show()
+                    true
+
+                }
                 else -> false
 
             }
@@ -401,6 +395,8 @@ class AddLocationActivity : AppCompatActivity() {
 
     private fun saveLocation() {
 
+        saveLocationButton.isEnabled = false
+
         val lat = latOfLocation.text.toString()
         val long = longOfLocation.text.toString()
 
@@ -439,17 +435,7 @@ class AddLocationActivity : AppCompatActivity() {
             val progress = (100.0 * taskSnapshot.bytesTransferred) / taskSnapshot.totalByteCount
 
             // Visa ProgressBar och uppdatera framsteg
-             progressBar.visibility = View.VISIBLE
-
-//            progressBar.apply {
-//                alpha = 0f
-//                visibility = View.VISIBLE
-//
-//                animate()
-//                    .alpha(1f)
-//                    .setDuration(2000) // här kan du sätta tiden du vill ha för animationen
-//                    .setListener(null)
-//            }
+            progressBar.visibility = View.VISIBLE
             fadeViews(viewsToFade, true)
             progressBar.progress = progress.toInt()
         }
@@ -525,7 +511,7 @@ class AddLocationActivity : AppCompatActivity() {
         return false
     }
 
-    fun fadeViews(views: List<View>, fadeOut: Boolean) {
+    private fun fadeViews(views: List<View>, fadeOut: Boolean) {
         val alphaValue = if (fadeOut) 0.5f else 1f
 
         views.forEach { view ->
@@ -552,6 +538,7 @@ class AddLocationActivity : AppCompatActivity() {
 
         imageView = findViewById(R.id.imageView)
 
-        viewsToFade = listOf(nameOfLocationView, dateOfPhotoView, imageView, descriptionOfLocationView, latOfLocationView, longOfLocationView)
+        viewsToFade = listOf(nameOfLocationView, dateOfPhotoView, imageView, descriptionOfLocationView, latOfLocationView, longOfLocationView, nameOfLocation, dateOfPhoto, descriptionOfLocation,latOfLocation, longOfLocation)
+
     }
 }

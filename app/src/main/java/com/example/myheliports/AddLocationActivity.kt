@@ -19,7 +19,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import android.Manifest
+import android.app.ProgressDialog
 import android.content.ContentValues
+import android.content.ContentValues.TAG
 import android.content.Intent
 import android.media.ExifInterface
 import android.provider.MediaStore
@@ -37,6 +39,8 @@ import android.os.Environment
 import android.text.Selection.setSelection
 import android.util.Log
 import android.view.View
+import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.net.toUri
 import androidx.lifecycle.LifecycleOwner
@@ -47,6 +51,8 @@ import com.drew.imaging.ImageMetadataReader
 import com.drew.metadata.exif.GpsDirectory
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.datepicker.MaterialDatePicker
+import com.google.firebase.Timestamp
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.launch
 import java.lang.ref.ReferenceQueue
 import java.util.*
@@ -68,6 +74,8 @@ class AddLocationActivity : AppCompatActivity() {
     lateinit var db: FirebaseFirestore
     lateinit var auth: FirebaseAuth
 
+    lateinit var storage: FirebaseStorage
+
     lateinit var nameOfLocation: TextInputEditText
     lateinit var dateOfPhoto: TextInputEditText
     lateinit var descriptionOfLocation: TextInputEditText
@@ -80,14 +88,22 @@ class AddLocationActivity : AppCompatActivity() {
     lateinit var latOfLocationView: TextInputLayout
     lateinit var longOfLocationView: TextInputLayout
 
+    lateinit var viewsToFade: List<View>
+
+
     private lateinit var photoViewModel: PhotoViewModel
     lateinit var imageView: ImageView
 
-    lateinit var saveLocationButton: Button
+    private lateinit var saveLocationButton: Button
 
     private lateinit var currentPhotoPath: String
 
     private var photoFile: File? = null
+    var dateOfPhotoTimestamp: Timestamp? = null
+    var file: File? = null  // Definiera file här
+    var fileURI: Uri? = null
+
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -96,6 +112,7 @@ class AddLocationActivity : AppCompatActivity() {
 
         db = Firebase.firestore
         auth = Firebase.auth
+        storage = Firebase.storage
 
         initializeViews()
 
@@ -107,26 +124,12 @@ class AddLocationActivity : AppCompatActivity() {
 
         showPhotoView()
 
-        dateOfPhotoView.setEndIconOnClickListener {
-            val datePicker =
-                MaterialDatePicker.Builder.datePicker()
-                    .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
-                    .setInputMode(MaterialDatePicker.INPUT_MODE_TEXT)
-                    .setTitleText("Select date")
-                    .build()
-
-            datePicker.addOnPositiveButtonClickListener { selection ->
-                val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                val dateString = sdf.format(Date(selection))
-                dateOfPhoto.setText(dateString)
-            }
-
-            datePicker.show(supportFragmentManager, "tag")
-        }
+        handleDate()
 
 
         saveLocationButton.setOnClickListener {
             saveLocation()
+            it.isEnabled = false
         }
 
         val topAppBar = findViewById<MaterialToolbar>(R.id.topAppBar)
@@ -140,13 +143,36 @@ class AddLocationActivity : AppCompatActivity() {
                     // Handle favorite icon press
                     true
                 }
+
                 else -> false
 
             }
         }
-
     }
-    private fun showPhotoView(){
+
+    private fun handleDate() {
+
+        dateOfPhotoView.setEndIconOnClickListener {
+            val datePicker =
+                MaterialDatePicker.Builder.datePicker()
+                    .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
+                    .setInputMode(MaterialDatePicker.INPUT_MODE_TEXT)
+                    .setTitleText("Select date")
+                    .build()
+
+            datePicker.addOnPositiveButtonClickListener { selection ->
+                val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                val dateString = sdf.format(Date(selection))
+                dateOfPhoto.setText(dateString)
+
+            // Skapa en Timestamp för Firestore
+            dateOfPhotoTimestamp = Timestamp(Date(selection))
+            }
+            datePicker.show(supportFragmentManager, "tag")
+        }
+    }
+
+    private fun showPhotoView() {
         photoViewModel = ViewModelProvider(this).get(PhotoViewModel::class.java)
 
         // Observe changes in the photoLiveData
@@ -157,6 +183,7 @@ class AddLocationActivity : AppCompatActivity() {
             imageView.scaleType = ImageView.ScaleType.FIT_XY
         }
     }
+
     private fun requestPermission() {
         // Check for camera and storage permissions
         if (!checkPermissions()) {
@@ -217,11 +244,13 @@ class AddLocationActivity : AppCompatActivity() {
         // Show the dialog
         builder.show()
     }
+
     private fun openGallery() {
         // Create an intent to pick an image from the gallery
         val galleryIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
         startActivityForResult(galleryIntent, REQUEST_GALLERY)
     }
+
     private fun openCamera() {
         // Create an intent to capture an image
         val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
@@ -260,7 +289,8 @@ class AddLocationActivity : AppCompatActivity() {
 //        }
 
         // Create an image file name
-        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val timeStamp: String =
+            SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
 
         // Create the file
@@ -269,6 +299,8 @@ class AddLocationActivity : AppCompatActivity() {
             ".jpg",
             storageDir
         )
+
+        file = imageFile
 
         // Save a file path for use with ACTION_VIEW intents
         currentPhotoPath = imageFile.absolutePath
@@ -285,7 +317,7 @@ class AddLocationActivity : AppCompatActivity() {
         return imageFile
     }
 
-    fun extractExifData(photoPath: String? = null, uri: Uri? = null) {
+    private fun extractExifData(photoPath: String? = null, uri: Uri? = null) {
 
 //        // Check for storage permission
 //        if (ContextCompat.checkSelfPermission(
@@ -304,13 +336,14 @@ class AddLocationActivity : AppCompatActivity() {
                 ExifInterface(inputStream!!)
 
             }
+
             else -> throw IllegalArgumentException("Both photoPath and uri cannot be null")
         }
 
         // Extract date
         val dateTaken = exifInterface.getAttribute(ExifInterface.TAG_DATETIME)
 
-        if (!dateTaken.isNullOrBlank()){
+        if (!dateTaken.isNullOrBlank()) {
 
         }
 
@@ -344,9 +377,11 @@ class AddLocationActivity : AppCompatActivity() {
                     data?.data?.let { uri ->
                         photoViewModel.setPhotoUri(uri)
                         extractExifData(null, uri)
+                        fileURI = uri
                     }
                 }
             }
+
             REQUEST_CAMERA -> {
                 if (resultCode == RESULT_OK) {
                     // Handle the photo taken by the camera
@@ -364,7 +399,7 @@ class AddLocationActivity : AppCompatActivity() {
         }
     }
 
-    fun saveLocation() {
+    private fun saveLocation() {
 
         val lat = latOfLocation.text.toString()
         val long = longOfLocation.text.toString()
@@ -374,9 +409,9 @@ class AddLocationActivity : AppCompatActivity() {
         if (!checkCoordinates) {
             latOfLocationView.error = getString(R.string.error)
             longOfLocationView.error = getString(R.string.error)
+            saveLocationButton.isEnabled = true
             return
-        }
-        else {
+        } else {
             latOfLocationView.error = null
             longOfLocationView.error = null
         }
@@ -384,23 +419,93 @@ class AddLocationActivity : AppCompatActivity() {
         val latDouble = lat.toDouble()
         val longDouble = long.toDouble()
 
-        //Create Location Object
-        val location = Location(
-            name= nameOfLocation.text.toString(),
-            dateOfPhoto = Date(),
-            description = descriptionOfLocation.text.toString(),
-            lat = latDouble,
-            long = longDouble,
-            rating = 3,
-            imageLink = "greenland"
-        )
 
-        val user = auth.currentUser ?: return
+        val fileLocation = if (file != null) {
+            Uri.fromFile(file)
+        }
+        else {
+             fileURI
+        }
 
-        //db.collection("users").document(user.uid).collection("locations").add(location)
+        val fileName = fileLocation?.lastPathSegment.toString()  // Detta ger dig filnamnet
+        val storageRef = storage.reference.child("images/$fileName")
+
+        val uploadTask = fileLocation?.let { storageRef.putFile(it) }
+
+        val progressBar = findViewById<ProgressBar>(R.id.progressBar)
+
+        uploadTask?.addOnProgressListener { taskSnapshot ->
+            // Beräkna uppladdningsprogressen
+            val progress = (100.0 * taskSnapshot.bytesTransferred) / taskSnapshot.totalByteCount
+
+            // Visa ProgressBar och uppdatera framsteg
+             progressBar.visibility = View.VISIBLE
+
+//            progressBar.apply {
+//                alpha = 0f
+//                visibility = View.VISIBLE
+//
+//                animate()
+//                    .alpha(1f)
+//                    .setDuration(2000) // här kan du sätta tiden du vill ha för animationen
+//                    .setListener(null)
+//            }
+            fadeViews(viewsToFade, true)
+            progressBar.progress = progress.toInt()
+        }
+
+        uploadTask?.addOnSuccessListener {
+            storageRef.downloadUrl.addOnSuccessListener { uri ->
+
+                val imageUrl = uri.toString()
+                val user = auth.currentUser
+
+                if (user == null) {
+                    // Visa ett felmeddelande eller på annat sätt hantera situationen
+                    Log.w("!!!", "User not signed in")
+                } else {
+                    //Create Location Object
+                    val location = Location(
+                        name = nameOfLocation.text.toString(),
+                        dateOfPhoto = dateOfPhotoTimestamp,
+                        description = descriptionOfLocation.text.toString(),
+                        lat = latDouble,
+                        long = longDouble,
+                        rating = 3,
+                        imageLink = imageUrl,
+                        userId = user.uid
+                    )
+
+                    db.collection("users").document(user.uid).collection("locations").add(location)
+                        .addOnSuccessListener { documentReference ->
+                            Log.d("!!!", "DocumentSnapshot added with ID: ${documentReference.id}")
+
+                            progressBar.visibility = View.GONE
+                            finish()
+                        }
+                        .addOnFailureListener { e ->
+                            Log.w("!!!", "Error adding document", e)
+                            fadeViews(viewsToFade, false)
+                            saveLocationButton.isEnabled = true
+                        }
+                }
+            }
+        }
+        uploadTask?.addOnFailureListener { exception ->
+            // Logga felet för felsökning
+            Log.w("!!!", "Upload failed: $exception")
+
+            progressBar.visibility = View.GONE
+
+            fadeViews(viewsToFade, false)
+            saveLocationButton.isEnabled = true
+
+            // Visa ett felmeddelande till användaren
+            Toast.makeText(this, "Save failed: ${exception.message}", Toast.LENGTH_LONG).show()
+        }
     }
 
-    fun checkLatLong(latStr: String?, longStr: String?): Boolean {
+    private fun checkLatLong(latStr: String?, longStr: String?): Boolean {
 
         try {
             val lat = latStr?.toDouble()
@@ -420,7 +525,17 @@ class AddLocationActivity : AppCompatActivity() {
         return false
     }
 
-    private fun initializeViews(){
+    fun fadeViews(views: List<View>, fadeOut: Boolean) {
+        val alphaValue = if (fadeOut) 0.5f else 1f
+
+        views.forEach { view ->
+            view.animate()
+                .alpha(alphaValue)
+                .setDuration(2000)
+                .setListener(null)
+        }
+    }
+    private fun initializeViews() {
         nameOfLocationView = findViewById(R.id.nameOfLocationView)
         dateOfPhotoView = findViewById(R.id.dateOfPhotoView)
         descriptionOfLocationView = findViewById(R.id.descriptionOfLocationView)
@@ -436,5 +551,7 @@ class AddLocationActivity : AppCompatActivity() {
         saveLocationButton = findViewById(R.id.saveLocationButton)
 
         imageView = findViewById(R.id.imageView)
+
+        viewsToFade = listOf(nameOfLocationView, dateOfPhotoView, imageView, descriptionOfLocationView, latOfLocationView, longOfLocationView)
     }
 }

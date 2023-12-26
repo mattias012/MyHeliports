@@ -178,8 +178,10 @@
         android:layout_marginTop="20dp"
         android:checked="false"
         android:text="Present pos."
+        android:visibility="invisible"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/latOfLocationView" />
+        app:layout_constraintTop_toBottomOf="@+id/latOfLocationView"
+        tools:visibility="invisible" />
 
     <!-- Linear progress indicator -->
     <com.google.android.material.progressindicator.LinearProgressIndicator

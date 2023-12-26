@@ -87,8 +87,6 @@ class AddLocationActivity : AppCompatActivity() {
     var fileURI: Uri? = null
 
 
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_location)
@@ -126,6 +124,7 @@ class AddLocationActivity : AppCompatActivity() {
 
                     true
                 }
+
                 R.id.help -> {
 
                     MaterialAlertDialogBuilder(this@AddLocationActivity)
@@ -138,6 +137,7 @@ class AddLocationActivity : AppCompatActivity() {
                     true
 
                 }
+
                 else -> false
 
             }
@@ -155,12 +155,12 @@ class AddLocationActivity : AppCompatActivity() {
                     .build()
 
             datePicker.addOnPositiveButtonClickListener { selection ->
-                val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                 val dateString = sdf.format(Date(selection))
                 dateOfPhoto.setText(dateString)
 
-            // Skapa en Timestamp för Firestore
-            dateOfPhotoTimestamp = Timestamp(Date(selection))
+                // Skapa en Timestamp för Firestore
+                dateOfPhotoTimestamp = Timestamp(Date(selection))
             }
             datePicker.show(supportFragmentManager, "tag")
         }
@@ -339,6 +339,20 @@ class AddLocationActivity : AppCompatActivity() {
 
         if (!dateTaken.isNullOrBlank()) {
 
+            // Skapa ett SimpleDateFormat-objekt för att tolka datumet från ExifInterface
+            val formatExif = SimpleDateFormat("yyyy:MM:dd HH:mm:ss", Locale.getDefault())
+
+            // Konvertera dateTaken till ett Date-objekt
+            val date = formatExif.parse(dateTaken)
+
+            dateOfPhotoTimestamp = Timestamp(date)
+
+            // Skapa ett annat SimpleDateFormat-objekt för att formatera datumet som du vill ha det
+            val formatThis = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+
+            // Konvertera date till en sträng med önskat format
+            val dateString = formatThis.format(date)
+            dateOfPhoto.setText(dateString)
         }
 
         // Extract location
@@ -418,9 +432,8 @@ class AddLocationActivity : AppCompatActivity() {
 
         val fileLocation = if (file != null) {
             Uri.fromFile(file)
-        }
-        else {
-             fileURI
+        } else {
+            fileURI
         }
 
         val fileName = fileLocation?.lastPathSegment.toString()  // Detta ger dig filnamnet
@@ -521,6 +534,7 @@ class AddLocationActivity : AppCompatActivity() {
                 .setListener(null)
         }
     }
+
     private fun initializeViews() {
         nameOfLocationView = findViewById(R.id.nameOfLocationView)
         dateOfPhotoView = findViewById(R.id.dateOfPhotoView)
@@ -538,7 +552,19 @@ class AddLocationActivity : AppCompatActivity() {
 
         imageView = findViewById(R.id.imageView)
 
-        viewsToFade = listOf(nameOfLocationView, dateOfPhotoView, imageView, descriptionOfLocationView, latOfLocationView, longOfLocationView, nameOfLocation, dateOfPhoto, descriptionOfLocation,latOfLocation, longOfLocation)
+        viewsToFade = listOf(
+            nameOfLocationView,
+            dateOfPhotoView,
+            imageView,
+            descriptionOfLocationView,
+            latOfLocationView,
+            longOfLocationView,
+            nameOfLocation,
+            dateOfPhoto,
+            descriptionOfLocation,
+            latOfLocation,
+            longOfLocation
+        )
 
     }
 }

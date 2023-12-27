@@ -1,0 +1,29 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+<!--    <item-->
+<!--        android:id="@+id/back"-->
+<!--        android:icon="@drawable/baseline_arrow_back_ios_24"-->
+<!--        android:title="Back"-->
+<!--        android:contentDescription="Close this window"-->
+<!--        app:showAsAction="ifRoom"-->
+<!--        />-->
+
+    <item
+        android:id="@+id/help"
+        android:icon="@drawable/baseline_help_24"
+        android:title="Help"
+        android:contentDescription="Help"
+        app:showAsAction="ifRoom"
+        />
+
+
+    <item
+        android:id="@+id/user"
+        android:contentDescription="User profile"
+        app:showAsAction="ifRoom"
+        android:title="Profile"
+        android:icon="@drawable/baseline_person_pin_24"
+      />
+
+</menu>

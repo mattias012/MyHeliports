@@ -475,7 +475,7 @@ class AddLocationActivity : AppCompatActivity() {
                         userId = user.uid
                     )
 
-                    db.collection("users").document(user.uid).collection("locations").add(location)
+                    db.collection("locations").add(location)
                         .addOnSuccessListener { documentReference ->
                             Log.d("!!!", "DocumentSnapshot added with ID: ${documentReference.id}")
 

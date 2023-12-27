@@ -16,8 +16,7 @@ class StartActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_start)
 
-        showFragment(R.id.container, ListLocationFragment())
-        Log.d("!!!", "ListLocationFragment is shown")
+        showFragment(R.id.container, ListLocationFragment(), true)
 
         addItemButton = findViewById(R.id.addItemButton)
         val bottomNavigation = findViewById<NavigationBarView>(R.id.bottom_navigation)
@@ -30,7 +29,7 @@ class StartActivity : AppCompatActivity() {
         NavigationBarView.OnItemSelectedListener { item ->
             when(item.itemId) {
                 R.id.item_1 -> {
-                    showFragment(R.id.container, ListLocationFragment())
+
                     true
                 }
                 R.id.item_2 -> {
@@ -47,7 +46,7 @@ class StartActivity : AppCompatActivity() {
         bottomNavigation.setOnItemReselectedListener { item ->
             when(item.itemId) {
                 R.id.item_1 -> {
-                    // Respond to navigation item 1 reselection
+                    showFragment(R.id.container, ListLocationFragment(), false)
                 }
                 R.id.item_2 -> {
                     // Respond to navigation item 2 reselection
@@ -59,12 +58,34 @@ class StartActivity : AppCompatActivity() {
         }
 
     }
+//    override fun onResume() {
+//        super.onResume()
+//        showFragment(R.id.container, ListLocationFragment(), false)
+//    }
 
-    private fun showFragment(containerId: Int, fragment: Fragment) {
+    private fun showFragment(containerId: Int, fragment: Fragment, isOnCreate: Boolean) {
 
         val transaction = supportFragmentManager.beginTransaction()
-        transaction.add(containerId, fragment, "$containerId")
+
+        if (isOnCreate) {
+            transaction.add(containerId, fragment, "$containerId")
+        }
+        else {
+            transaction.replace(containerId, fragment, "$containerId")
+        }
+
         transaction.commit()
 
+    }
+
+    fun showLocationFragment(documentId: String) {
+        val fragment = ShowLocationFragment()
+        val args = Bundle()
+        args.putString("documentId", documentId)
+        fragment.arguments = args
+        val transaction = supportFragmentManager.beginTransaction()
+        transaction.replace(R.id.container, fragment, "ShowLocationFragment")
+        transaction.addToBackStack(null) // Lägg till transactionen till back stack så att användaren kan navigera tillbaka
+        transaction.commit()
     }
 }

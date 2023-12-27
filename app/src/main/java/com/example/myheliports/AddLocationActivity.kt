@@ -31,6 +31,7 @@ import android.os.Environment
 import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
+import android.widget.RatingBar
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.appbar.MaterialToolbar
@@ -64,6 +65,7 @@ class AddLocationActivity : AppCompatActivity() {
     lateinit var descriptionOfLocation: TextInputEditText
     lateinit var latOfLocation: TextInputEditText
     lateinit var longOfLocation: TextInputEditText
+    lateinit var ratingView: RatingBar
 
     lateinit var nameOfLocationView: TextInputLayout
     lateinit var dateOfPhotoView: TextInputLayout
@@ -85,6 +87,7 @@ class AddLocationActivity : AppCompatActivity() {
     var dateOfPhotoTimestamp: Timestamp? = null
     var file: File? = null  // Definiera file här
     var fileURI: Uri? = null
+    var rating: Int? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -429,11 +432,25 @@ class AddLocationActivity : AppCompatActivity() {
         val latDouble = lat.toDouble()
         val longDouble = long.toDouble()
 
+        rating = ratingView.numStars
 
-        val fileLocation = if (file != null) {
+        var fileLocation = if (file != null) {
             Uri.fromFile(file)
         } else {
             fileURI
+        }
+
+        if (fileLocation == null){
+            val defaultImageResId = R.raw.default1
+            val inputStream = resources.openRawResource(defaultImageResId)
+            val defaultFile = File(this.filesDir, "default1.jpg")
+            inputStream.use { input ->
+                defaultFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+
+            fileLocation = Uri.fromFile(defaultFile)
         }
 
         val fileName = fileLocation?.lastPathSegment.toString()  // Detta ger dig filnamnet
@@ -470,7 +487,7 @@ class AddLocationActivity : AppCompatActivity() {
                         description = descriptionOfLocation.text.toString(),
                         lat = latDouble,
                         long = longDouble,
-                        rating = 3,
+                        rating = rating,
                         imageLink = imageUrl,
                         userId = user.uid
                     )
@@ -547,6 +564,7 @@ class AddLocationActivity : AppCompatActivity() {
         descriptionOfLocation = findViewById(R.id.descriptionOfLocation)
         latOfLocation = findViewById(R.id.latOfLocation)
         longOfLocation = findViewById(R.id.longOfLocation)
+        ratingView = findViewById(R.id.ratingBar)
 
         saveLocationButton = findViewById(R.id.saveLocationButton)
 
@@ -563,7 +581,8 @@ class AddLocationActivity : AppCompatActivity() {
             dateOfPhoto,
             descriptionOfLocation,
             latOfLocation,
-            longOfLocation
+            longOfLocation,
+            ratingView
         )
 
     }

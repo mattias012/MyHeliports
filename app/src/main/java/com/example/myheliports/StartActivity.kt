@@ -26,14 +26,14 @@ class StartActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        NavigationBarView.OnItemSelectedListener { item ->
+        bottomNavigation.setOnItemSelectedListener { item ->
             when(item.itemId) {
                 R.id.item_1 -> {
-
+                    showFragment(R.id.container, ListLocationFragment(), false)
                     true
                 }
                 R.id.item_2 -> {
-                    // Respond to navigation item 2 click
+                    showFragment(R.id.container, MapsFragment(), false)
                     true
                 }
                 R.id.item_3 -> {
@@ -43,25 +43,21 @@ class StartActivity : AppCompatActivity() {
                 else -> false
             }
         }
-        bottomNavigation.setOnItemReselectedListener { item ->
-            when(item.itemId) {
-                R.id.item_1 -> {
-                    showFragment(R.id.container, ListLocationFragment(), false)
-                }
-                R.id.item_2 -> {
-                    // Respond to navigation item 2 reselection
-                }
-                R.id.item_3 -> {
-                    // Respond to navigation item 2 reselection
-                }
-            }
-        }
+//        bottomNavigation.setOnItemReselectedListener { item ->
+//            when(item.itemId) {
+//                R.id.item_1 -> {
+//                    showFragment(R.id.container, ListLocationFragment(), false)
+//                }
+//                R.id.item_2 -> {
+//                    showFragment(R.id.container, MapsFragment(), false)
+//                }
+//                R.id.item_3 -> {
+//                    // Respond to navigation item 2 reselection
+//                }
+//            }
+//        }
 
     }
-//    override fun onResume() {
-//        super.onResume()
-//        showFragment(R.id.container, ListLocationFragment(), false)
-//    }
 
     private fun showFragment(containerId: Int, fragment: Fragment, isOnCreate: Boolean) {
 

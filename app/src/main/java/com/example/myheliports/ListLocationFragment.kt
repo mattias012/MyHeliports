@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.navigation.Navigation.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
@@ -34,7 +35,7 @@ class ListLocationFragment : Fragment() {
 
         Log.d("!!!", "inflate")
         val db = Firebase.firestore
-        progressBar.visibility = View.VISIBLE  // Starta ProgressBar
+        progressBar.visibility = View.VISIBLE // Starta ProgressBar
 
         db.collection("locations")
             .addSnapshotListener { snapshots, error ->

@@ -1,5 +1,6 @@
 package com.example.myheliports
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -14,6 +15,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import com.bumptech.glide.Glide
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
@@ -31,6 +33,11 @@ class ShowLocationFragment : Fragment() {
     lateinit var latlongTextView: TextView
     lateinit var topAppBar: MaterialToolbar
     lateinit var addItemButton: FloatingActionButton
+
+    var lat: Double? = null
+    var long: Double? = null
+    var imageLink: String? = null
+    var titleLocationToShare: String? = null
 
     override fun onCreateView(
 
@@ -52,6 +59,24 @@ class ShowLocationFragment : Fragment() {
                 goBackStuff()
             }
 
+            topAppBar.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.user -> {
+
+                        true
+                    }
+
+                    R.id.edit -> {
+                        true
+
+                    }
+                    R.id.share ->{
+                        shareLocation()
+                        true
+                    }
+                    else -> false
+                }
+            }
             //Override androids backbutton
             requireActivity().onBackPressedDispatcher.addCallback(
                 viewLifecycleOwner,
@@ -106,6 +131,11 @@ class ShowLocationFragment : Fragment() {
                             imageViewLocation.setImageResource(R.drawable.default1)
                         }
 
+                         lat = location.lat
+                         long = location.long
+                         imageLink = location.imageLink
+                        titleLocationToShare = location.name
+
                     } ?: run {
                         Log.d("!!!", "No such document")
                     }
@@ -118,11 +148,27 @@ class ShowLocationFragment : Fragment() {
         return view
     }
 
+
+   private fun shareLocation(){
+       // Skapa en Google Maps länk
+       val googleMapsLink = "http://maps.google.com/maps?q=$lat,$long"
+
+       val imageUri = imageLink
+
+       val shareString = "$titleLocationToShare - View it on Google Maps: \n$googleMapsLink"
+
+       val shareIntent = Intent().apply {
+           action = Intent.ACTION_SEND
+           putExtra(Intent.EXTRA_TEXT, shareString)
+           putExtra(Intent.EXTRA_STREAM, imageUri)
+           type = "image/*"
+           addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+       }
+       startActivity(Intent.createChooser(shareIntent, "Share via"))
+    }
+
     private fun goBackStuff() {
         (activity as StartActivity).goBack()
-//        topAppBar.menu.clear(); // Rensa den gamla menyn
-//        topAppBar.inflateMenu(R.menu.top_app_bar); // Lägg till den nya menyn
-        addItemButton.show()
     }
 
     private fun setupThisFragment(fragmentact: FragmentActivity) {

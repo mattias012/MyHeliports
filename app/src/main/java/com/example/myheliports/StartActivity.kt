@@ -5,16 +5,23 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.FrameLayout
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.navigation.NavigationBarView
 
 class StartActivity : AppCompatActivity() {
 
     lateinit var addItemButton: FloatingActionButton
+    lateinit var topAppBar: MaterialToolbar
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_start)
+
+        topAppBar = findViewById(R.id.topAppBar)
 
         showFragment(R.id.container, ListLocationFragment(), true)
 
@@ -26,37 +33,34 @@ class StartActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+
         bottomNavigation.setOnItemSelectedListener { item ->
-            when(item.itemId) {
+            when (item.itemId) {
                 R.id.item_1 -> {
                     showFragment(R.id.container, ListLocationFragment(), false)
+                    setupTopBar()
                     true
                 }
+
                 R.id.item_2 -> {
                     showFragment(R.id.container, MapsFragment(), false)
                     true
                 }
+
                 R.id.item_3 -> {
                     // Respond to navigation item 2 click
                     true
                 }
+
                 else -> false
             }
         }
-//        bottomNavigation.setOnItemReselectedListener { item ->
-//            when(item.itemId) {
-//                R.id.item_1 -> {
-//                    showFragment(R.id.container, ListLocationFragment(), false)
-//                }
-//                R.id.item_2 -> {
-//                    showFragment(R.id.container, MapsFragment(), false)
-//                }
-//                R.id.item_3 -> {
-//                    // Respond to navigation item 2 reselection
-//                }
-//            }
-//        }
+    }
 
+    override fun onResume() {
+        super.onResume()
+//        showFragment(R.id.container, ListLocationFragment(), false)
+      setupTopBar()
     }
 
     private fun showFragment(containerId: Int, fragment: Fragment, isOnCreate: Boolean) {
@@ -65,8 +69,7 @@ class StartActivity : AppCompatActivity() {
 
         if (isOnCreate) {
             transaction.add(containerId, fragment, "$containerId")
-        }
-        else {
+        } else {
             transaction.replace(containerId, fragment, "$containerId")
         }
 
@@ -83,5 +86,16 @@ class StartActivity : AppCompatActivity() {
         transaction.replace(R.id.container, fragment, "ShowLocationFragment")
         transaction.addToBackStack(null) // Lägg till transactionen till back stack så att användaren kan navigera tillbaka
         transaction.commit()
+    }
+
+    fun goBack() {
+        supportFragmentManager.popBackStack()
+        setupTopBar()
+    }
+    private fun setupTopBar(){
+        topAppBar.menu.clear(); // Rensa den gamla menyn
+        topAppBar.inflateMenu(R.menu.top_app_bar); // Lägg till den nya menyn
+        topAppBar.navigationIcon = null
+        topAppBar.title = "MyHeliports"
     }
 }

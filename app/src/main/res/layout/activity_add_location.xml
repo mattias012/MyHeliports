@@ -22,7 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="?attr/actionBarSize"
-            app:menu="@menu/top_app_bar"
+            app:menu="@menu/top_app_bar_addlocation"
             app:navigationIcon="@drawable/baseline_arrow_back_ios_24"
             app:title="Add Location"
             app:titleCentered="true" />

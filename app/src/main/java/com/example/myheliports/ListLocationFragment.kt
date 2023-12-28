@@ -1,18 +1,24 @@
 package com.example.myheliports
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.navigation.Navigation.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
@@ -21,6 +27,8 @@ class ListLocationFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private var locationList: MutableList<Location> = mutableListOf()
     private lateinit var progressBar: ProgressBar
+//    private lateinit var listIconView: ImageView
+//    private lateinit var gridIconView: ImageView
     override fun onCreateView(
 
         inflater: LayoutInflater,
@@ -33,31 +41,73 @@ class ListLocationFragment : Fragment() {
         recyclerView.layoutManager = GridLayoutManager(requireContext(),2)
         progressBar = view.findViewById(R.id.progressBar)
 
-        Log.d("!!!", "inflate")
+    activity?.let {
+        val topAppBar = it.findViewById<MaterialToolbar>(R.id.topAppBar)
+//        topAppBar.setNavigationOnClickListener {
+//            finish()
+//        }
+
+        topAppBar.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.user -> {
+
+                    true
+                }
+
+                R.id.grid -> {
+
+                    toggleViewMode(2)
+                    true
+
+                }
+                R.id.list -> {
+                    toggleViewMode(1)
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+
+    Log.d("!!!", "inflate")
         val db = Firebase.firestore
         progressBar.visibility = View.VISIBLE // Starta ProgressBar
+        Handler(Looper.getMainLooper()).postDelayed({
+            db.collection("locations")
+                .addSnapshotListener { snapshots, error ->
+                    if (error != null) {
+                        Log.w("!!!", "Error getting documents.", error)
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to load locations",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        progressBar.visibility =
+                            View.GONE  // Stoppa ProgressBar om det finns ett fel
+                        return@addSnapshotListener
+                    }
 
-        db.collection("locations")
-            .addSnapshotListener { snapshots, error ->
-                if (error != null) {
-                    Log.w("!!!", "Error getting documents.", error)
-                    Toast.makeText(requireContext(), "Failed to load locations", Toast.LENGTH_SHORT).show()
-                    progressBar.visibility = View.GONE  // Stoppa ProgressBar om det finns ett fel
-                    return@addSnapshotListener
+                    locationList.clear()
+                    for (document in snapshots!!) {
+                        val location = document.toObject(Location::class.java)
+                        locationList.add(location)
+                    }
+                    val adapter = LocationRecyclerAdapter(requireContext(), locationList)
+                    recyclerView.adapter = adapter
+                    progressBar.visibility = View.GONE  // Stoppa ProgressBar när data har hämtats
                 }
-
-                locationList.clear()
-                for (document in snapshots!!) {
-                    val location = document.toObject(Location::class.java)
-                    locationList.add(location)
-                }
-                val adapter = LocationRecyclerAdapter(requireContext(), locationList)
-                recyclerView.adapter = adapter
-
-                progressBar.visibility = View.GONE  // Stoppa ProgressBar när data har hämtats
-            }
+        },500)
 
         return view
+    }
+
+    fun toggleViewMode(columns: Int) {
+        //New layoutmanager with number of columns
+        recyclerView.layoutManager = GridLayoutManager(requireContext(), columns)
+
+        //Update adapter
+        recyclerView.adapter?.notifyDataSetChanged()
     }
 
 }

@@ -15,16 +15,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-<!--    <ImageView-->
-<!--        android:id="@+id/showGrid"-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_marginTop="16dp"-->
-<!--        android:layout_marginEnd="16dp"-->
-<!--        app:layout_constraintEnd_toEndOf="parent"-->
-<!--        app:layout_constraintTop_toTopOf="parent"-->
-<!--        app:srcCompat="@drawable/baseline_grid_view_24" />-->
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/listOfLocationsView"
         android:layout_width="0dp"
@@ -34,15 +24,5 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:listitem="@layout/item_listlocation" />
-
-<!--    <ImageView-->
-<!--        android:id="@+id/showList"-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_marginTop="16dp"-->
-<!--        android:layout_marginEnd="8dp"-->
-<!--        app:layout_constraintEnd_toStartOf="@+id/showGrid"-->
-<!--        app:layout_constraintTop_toTopOf="parent"-->
-<!--        app:srcCompat="@drawable/baseline_format_list_bulleted_24" />-->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

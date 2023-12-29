@@ -55,6 +55,19 @@ class StartActivity : AppCompatActivity() {
                 else -> false
             }
         }
+        bottomNavigation.setOnItemReselectedListener { item ->
+            when(item.itemId) {
+                R.id.item_1 -> {
+                    // Respond to navigation item 1 reselection
+                }
+                R.id.item_2 -> {
+                    // Respond to navigation item 2 reselection
+                }
+                R.id.item_3 -> {
+                    // Respond to navigation item 2 click
+                }
+            }
+        }
     }
 
 //    override fun onResume() {

@@ -17,8 +17,6 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class SignupActivity : AppCompatActivity() {
 
@@ -53,9 +51,11 @@ class SignupActivity : AppCompatActivity() {
                 getUserName(userName) { userExists ->
                     if (userExists) {
                         userNameSignUpView.error = "Username already exists"
+                        signupButton.isEnabled = false
                     }
                     else {
                         userNameSignUpView.error = null
+                        signupButton.isEnabled = true
                     }
                 }
             }

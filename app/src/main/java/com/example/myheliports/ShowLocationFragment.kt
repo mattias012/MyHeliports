@@ -2,11 +2,14 @@ package com.example.myheliports
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.RatingBar
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
@@ -16,6 +19,7 @@ import androidx.fragment.app.FragmentActivity
 import com.bumptech.glide.Glide
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.divider.MaterialDivider
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
@@ -26,20 +30,22 @@ import java.util.Locale
 
 class ShowLocationFragment : Fragment() {
 
-    lateinit var imageViewLocation: ImageView
-    lateinit var ratingBarLocation: RatingBar
-    lateinit var locationTitle: TextView
-    lateinit var descriptionLocation: TextView
-    lateinit var dateOfPhotoLocation: TextView
-    lateinit var latlongTextView: TextView
-    lateinit var topAppBar: MaterialToolbar
-    lateinit var addItemButton: FloatingActionButton
-    lateinit var addedByUser: TextView
+    private lateinit var imageViewLocation: ImageView
+    private lateinit var ratingBarLocation: RatingBar
+    private lateinit var locationTitle: TextView
+    private lateinit var descriptionLocation: TextView
+    private lateinit var dateOfPhotoLocation: TextView
+    private lateinit var latlongTextView: TextView
+    private lateinit var topAppBar: MaterialToolbar
+    private lateinit var addItemButton: FloatingActionButton
+    private lateinit var addedByUser: TextView
+    private lateinit var progressBar: ProgressBar
+    private lateinit var materialDivider: MaterialDivider
 
-    var lat: Double? = null
-    var long: Double? = null
-    var imageLink: String? = null
-    var titleLocationToShare: String? = null
+    private var lat: Double? = null
+    private var long: Double? = null
+    private var imageLink: String? = null
+    private var titleLocationToShare: String? = null
 
     private lateinit var db: FirebaseFirestore
 
@@ -52,18 +58,29 @@ class ShowLocationFragment : Fragment() {
 
         val view = inflater.inflate(R.layout.fragment_showlocation, container, false)
 
-        //Initialize all the views
-        initializeViews(view)
-
-        //Setup or menu
-        topBarAndMenuSetup()
+        progressBar = view.findViewById(R.id.progressBar)
+        progressBar.visibility = View.VISIBLE // Starta ProgressBar
 
         //Get data from the store
         val documentId = arguments?.getString("documentId")
         db = Firebase.firestore
 
+        //Initialize all the views
+        initializeViews(view)
+
         if (documentId != null) {
-            getLocationData(db, documentId)
+
+            Handler(Looper.getMainLooper()).postDelayed({
+                getLocationData(db, documentId)
+                //Stop progressbar and show ratingbar and materialdivders
+                ratingBarLocation.visibility = View.VISIBLE
+                materialDivider.visibility = View.VISIBLE
+                progressBar.visibility = View.GONE
+            },500)
+
+        //Setup or menu
+        topBarAndMenuSetup()
+
         }
 
         return view
@@ -81,18 +98,17 @@ class ShowLocationFragment : Fragment() {
             topAppBar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.user -> {
+                        val intent = Intent(requireContext(), ProfileActivity::class.java)
+                        startActivity(intent)
                         true
                     }
-
                     R.id.edit -> {
                         true
                     }
-
                     R.id.share -> {
                         shareLocation()
                         true
                     }
-
                     else -> false
                 }
             }
@@ -257,5 +273,6 @@ class ShowLocationFragment : Fragment() {
         dateOfPhotoLocation = view.findViewById(R.id.dateOfPhotoTextView)
         latlongTextView = view.findViewById(R.id.latlongTextView)
         addedByUser = view.findViewById(R.id.addedByUserTextView)
+        materialDivider = view.findViewById(R.id.materialDivider)
     }
 }

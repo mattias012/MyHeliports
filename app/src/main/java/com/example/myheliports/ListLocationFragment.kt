@@ -1,5 +1,6 @@
 package com.example.myheliports
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -27,8 +28,9 @@ class ListLocationFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private var locationList: MutableList<Location> = mutableListOf()
     private lateinit var progressBar: ProgressBar
-//    private lateinit var listIconView: ImageView
-//    private lateinit var gridIconView: ImageView
+
+    var columnsInGrid = 2
+
     override fun onCreateView(
 
         inflater: LayoutInflater,
@@ -38,27 +40,21 @@ class ListLocationFragment : Fragment() {
 
         val view = inflater.inflate(R.layout.fragment_listlocation, container, false)
         recyclerView = view.findViewById(R.id.listOfLocationsView)
-        recyclerView.layoutManager = GridLayoutManager(requireContext(),2)
+        recyclerView.layoutManager = GridLayoutManager(requireContext(),columnsInGrid)
         progressBar = view.findViewById(R.id.progressBar)
 
     activity?.let {
         val topAppBar = it.findViewById<MaterialToolbar>(R.id.topAppBar)
-//        topAppBar.setNavigationOnClickListener {
-//            finish()
-//        }
-
         topAppBar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.user -> {
-
+                    val intent = Intent(requireContext(), ProfileActivity::class.java)
+                    startActivity(intent)
                     true
                 }
-
                 R.id.grid -> {
-
                     toggleViewMode(2)
                     true
-
                 }
                 R.id.list -> {
                     toggleViewMode(1)
@@ -68,7 +64,6 @@ class ListLocationFragment : Fragment() {
             }
         }
     }
-
 
     Log.d("!!!", "inflate")
         val db = Firebase.firestore
@@ -93,9 +88,11 @@ class ListLocationFragment : Fragment() {
                         val location = document.toObject(Location::class.java)
                         locationList.add(location)
                     }
+                    //Set to adapter
                     val adapter = LocationRecyclerAdapter(requireContext(), locationList)
                     recyclerView.adapter = adapter
-                    progressBar.visibility = View.GONE  // Stoppa ProgressBar när data har hämtats
+                    //Stop progressBar
+                    progressBar.visibility = View.GONE
                 }
         },500)
 
@@ -108,6 +105,8 @@ class ListLocationFragment : Fragment() {
 
         //Update adapter
         recyclerView.adapter?.notifyDataSetChanged()
+
+        columnsInGrid = columns
     }
 
 }

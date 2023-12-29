@@ -75,7 +75,6 @@ class AddLocationActivity : AppCompatActivity() {
 
     lateinit var viewsToFade: List<View>
 
-
     private lateinit var photoViewModel: PhotoViewModel
     lateinit var imageView: ImageView
 

@@ -20,6 +20,6 @@ data class Location(
     var userId: String? = null,
 
     @ServerTimestamp
-    var timestamp: Date? = null){
+    var timestamp: Timestamp? = null){
 
 }

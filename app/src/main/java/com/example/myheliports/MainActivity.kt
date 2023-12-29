@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
         signupView = findViewById(R.id.sigupView)
 
         signupView.setOnClickListener {
-            signUp()
+            goToSignUp()
         }
 
         val loginButton = findViewById<Button>(R.id.loginButton)
@@ -40,24 +40,30 @@ class MainActivity : AppCompatActivity() {
             login()
         }
 
-        if (auth.currentUser != null){
-            val intent = Intent(this, StartActivity::class.java)
-            startActivity(intent)
-        }
-
+//        if (auth.currentUser != null){
+//            val intent = Intent(this, StartActivity::class.java)
+//            startActivity(intent)
+//        }
     }
 
-    fun login(){
+    private fun login() {
         val email = emailView.text.toString()
         val password = passwordView.text.toString()
 
-        if (email.isEmpty() || password.isEmpty()){
+        if (email.isEmpty()) {
+            return
+        }
+        val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
+        if (!email.matches(emailPattern.toRegex())) {
+            return
+        }
+        if (password.isEmpty() || password.length < 8) {
             return
         }
 
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
-                if (task.isSuccessful){
+                if (task.isSuccessful) {
 
                     val intent = Intent(this, StartActivity::class.java)
                     startActivity(intent)
@@ -67,27 +73,8 @@ class MainActivity : AppCompatActivity() {
                 }
             }
     }
-
-    fun signUp(){
-        val email = emailView.text.toString()
-        val password = passwordView.text.toString()
-
-        if (email.isEmpty() || password.isEmpty()){
-            return
-        }
-
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-            if (task.isSuccessful){
-                Toast.makeText(this, "User created", LENGTH_SHORT).show()
-
-                val intent = Intent(this, StartActivity::class.java)
-                startActivity(intent)
-
-            } else {
-                Log.d("!!!", "user not created ${task.exception}")
-            }
-        }
-
+    private fun goToSignUp(){
+        val intent = Intent(this, SignupActivity::class.java)
+        startActivity(intent)
     }
 }

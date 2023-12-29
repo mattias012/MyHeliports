@@ -57,11 +57,11 @@ class StartActivity : AppCompatActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-//        showFragment(R.id.container, ListLocationFragment(), false)
-      setupTopBar()
-    }
+//    override fun onResume() {
+//        super.onResume()
+////        showFragment(R.id.container, ListLocationFragment(), false)
+//      setupTopBar()
+//    }
 
     private fun showFragment(containerId: Int, fragment: Fragment, isOnCreate: Boolean) {
 

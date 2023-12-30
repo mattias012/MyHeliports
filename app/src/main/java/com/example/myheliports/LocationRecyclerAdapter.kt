@@ -30,10 +30,13 @@ class LocationRecyclerAdapter(private val context: Context, private val location
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val location = locationList[position]
+
         holder.titleView?.text = location.name
         holder.itemView.tag = location.documentId
         holder.itemView.setOnClickListener {
             val documentId = it.tag as String
+            //Remember last position in list
+            SharedData.position = position
             (it.context as StartActivity).showLocationFragment(documentId)
         }
 //        holder.descriptionView?.text = location.description
@@ -50,6 +53,8 @@ class LocationRecyclerAdapter(private val context: Context, private val location
         } else {
             holder.imageView?.setImageResource(R.drawable.default1)
         }
+
+
     }
 
     override fun getItemCount(): Int {

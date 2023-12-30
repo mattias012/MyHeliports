@@ -70,16 +70,18 @@ class ShowLocationFragment : Fragment() {
 
         if (documentId != null) {
 
+            getLocationTitle(documentId)
+
             Handler(Looper.getMainLooper()).postDelayed({
-                getLocationData(db, documentId)
+                getLocationData(documentId)
                 //Stop progressbar and show ratingbar and materialdivders
                 ratingBarLocation.visibility = View.VISIBLE
                 materialDivider.visibility = View.VISIBLE
                 progressBar.visibility = View.GONE
-            },500)
+            }, 500)
 
-        //Setup or menu
-        topBarAndMenuSetup()
+            //Setup or menu
+            topBarAndMenuSetup()
 
         }
 
@@ -102,13 +104,16 @@ class ShowLocationFragment : Fragment() {
                         startActivity(intent)
                         true
                     }
+
                     R.id.edit -> {
                         true
                     }
+
                     R.id.share -> {
                         shareLocation()
                         true
                     }
+
                     else -> false
                 }
             }
@@ -131,21 +136,19 @@ class ShowLocationFragment : Fragment() {
         dateOfPhotoLocation.text = dateString
     }
 
-    private fun fixTitleOfLocation(checkTitle: String, location: Location): String {
+    private fun fixTitleOfLocation(checkTitle: String): String {
 
         var titleOfLocationIs = checkTitle
 
         if (titleOfLocationIs.length > 13) {
             titleOfLocationIs = titleOfLocationIs.take(12) + "..."
         }
-        if (titleOfLocationIs == null) {
-            titleOfLocationIs = "Unknown Location"
-        }
 
         return titleOfLocationIs
+
     }
 
-    private fun getLocationData(db: FirebaseFirestore, documentId: String) {
+    private fun getLocationData(documentId: String) {
         db.collection("locations").document(documentId).get()
             .addOnSuccessListener { document ->
                 val location = document.toObject(Location::class.java)
@@ -163,11 +166,6 @@ class ShowLocationFragment : Fragment() {
                         ratingBarLocation.rating = location.rating!!.toFloat()
                         ratingBarLocation.isEnabled = false
                     }
-
-                    //Fix Title
-                    val checkTitle = location.name ?: "Location"
-                    val titleOfLocationIs = fixTitleOfLocation(checkTitle, it)
-                    topAppBar.title = titleOfLocationIs
 
                     //For full view, full name of lcation should be printed
                     locationTitle.text = location.name
@@ -194,6 +192,18 @@ class ShowLocationFragment : Fragment() {
                 } ?: run {
                     Log.d("!!!", "No such document")
                 }
+            }
+            .addOnFailureListener { exception ->
+                Log.d("!!!", "GET failed with ", exception)
+            }
+    }
+
+    private fun getLocationTitle(documentId: String) {
+        db.collection("locations").document(documentId).get()
+            .addOnSuccessListener { document ->
+                val checkTitle = document.getString("name") ?: "Location"
+                val titleOfLocationIs = fixTitleOfLocation(checkTitle)
+                topAppBar.title = titleOfLocationIs
             }
             .addOnFailureListener { exception ->
                 Log.d("!!!", "GET failed with ", exception)

@@ -38,6 +38,7 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import java.util.*
 
@@ -98,7 +99,6 @@ class AddLocationActivity : AppCompatActivity() {
         storage = Firebase.storage
 
         initializeViews()
-
         requestPermission()
 
         imageView.setOnClickListener {
@@ -106,13 +106,10 @@ class AddLocationActivity : AppCompatActivity() {
         }
 
         showPhotoView()
-
         handleDate()
-
 
         saveLocationButton.setOnClickListener {
             saveLocation()
-
         }
 
         val topAppBar = findViewById<MaterialToolbar>(R.id.topAppBar)
@@ -127,7 +124,6 @@ class AddLocationActivity : AppCompatActivity() {
                     startActivity(intent)
                     true
                 }
-
                 R.id.help -> {
 
                     MaterialAlertDialogBuilder(this@AddLocationActivity)
@@ -138,11 +134,8 @@ class AddLocationActivity : AppCompatActivity() {
                         }
                         .show()
                     true
-
                 }
-
                 else -> false
-
             }
         }
     }
@@ -274,16 +267,6 @@ class AddLocationActivity : AppCompatActivity() {
     }
 
     private fun createImageFile(): File {
-        // Check for storage permission
-//        if (ContextCompat.checkSelfPermission(
-//                this,
-//                Manifest.permission.WRITE_EXTERNAL_STORAGE
-//            ) != PackageManager.PERMISSION_GRANTED
-//        ) {
-//            // Permission is not granted, request it
-//            requestPermission()
-//            throw SecurityException("WRITE_EXTERNAL_STORAGE permission not granted")
-//        }
 
         // Create an image file name
         val timeStamp: String =
@@ -315,16 +298,6 @@ class AddLocationActivity : AppCompatActivity() {
     }
 
     private fun extractExifData(photoPath: String? = null, uri: Uri? = null) {
-
-//        // Check for storage permission
-//        if (ContextCompat.checkSelfPermission(
-//                this,
-//                Manifest.permission.ACCESS_MEDIA_LOCATION
-//            ) != PackageManager.PERMISSION_GRANTED
-//        ) else {
-//            // Permission is not granted, request it
-//            requestPermission()
-//        }
 
         val exifInterface = when {
             photoPath != null -> ExifInterface(photoPath)
@@ -366,11 +339,6 @@ class AddLocationActivity : AppCompatActivity() {
 
             val latitude = latLong[0]
             val longitude = latLong[1]
-
-//            val latitude = exifInterface.getAttribute(ExifInterface.TAG_GPS_LATITUDE)
-//            val longitude = exifInterface.getAttribute(ExifInterface.TAG_GPS_LONGITUDE)
-
-            Log.d("ExifData", "Date: $dateTaken, Latitude: $latitude, Longitude: $longitude")
 
             latOfLocation.setText(latitude.toString())
             longOfLocation.setText(longitude.toString())
@@ -440,7 +408,7 @@ class AddLocationActivity : AppCompatActivity() {
             fileURI
         }
 
-        if (fileLocation == null){
+        if (fileLocation == null) {
             val defaultImageResId = R.raw.default1
             val inputStream = resources.openRawResource(defaultImageResId)
             val defaultFile = File(this.filesDir, "default1.jpg")
@@ -504,6 +472,7 @@ class AddLocationActivity : AppCompatActivity() {
                             fadeViews(viewsToFade, false)
                             saveLocationButton.isEnabled = true
                         }
+
                 }
             }
         }

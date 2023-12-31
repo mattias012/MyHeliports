@@ -23,8 +23,10 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
@@ -54,73 +56,53 @@ class ListLocationFragment : Fragment() {
 
         val view = inflater.inflate(R.layout.fragment_listlocation, container, false)
         recyclerView = view.findViewById(R.id.listOfLocationsView)
-        recyclerView.layoutManager = GridLayoutManager(requireContext(),columnsInGrid)
+        recyclerView.layoutManager = GridLayoutManager(requireContext(), columnsInGrid)
         progressBar = view.findViewById(R.id.progressBar)
         searchView = view.findViewById(R.id.search)
         searchText = view.findViewById(R.id.searchText)
 
 
 
-            activity?.let {
-        val topAppBar = it.findViewById<MaterialToolbar>(R.id.topAppBar)
-        topAppBar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.user -> {
-                    val intent = Intent(requireContext(), ProfileActivity::class.java)
-                    startActivity(intent)
-                    true
+        activity?.let {
+            val topAppBar = it.findViewById<MaterialToolbar>(R.id.topAppBar)
+            topAppBar.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.user -> {
+                        val intent = Intent(requireContext(), ProfileActivity::class.java)
+                        startActivity(intent)
+                        true
+                    }
+
+                    R.id.grid -> {
+                        toggleViewMode(2)
+                        true
+                    }
+
+                    R.id.list -> {
+                        toggleViewMode(1)
+                        true
+                    }
+
+                    else -> false
                 }
-                R.id.grid -> {
-                    toggleViewMode(2)
-                    true
-                }
-                R.id.list -> {
-                    toggleViewMode(1)
-                    true
-                }
-                else -> false
             }
         }
-    }
         setupTextWatcher(searchText)
-        //Start progresBar
-        progressBar.visibility = View.VISIBLE
 
-        //Add a short delay, otherwise it goes too fast...
+        //Add a short delay, otherwise it goes too fast if we have few places...
         Handler(Looper.getMainLooper()).postDelayed({
-            db.collection("locations")
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .addSnapshotListener { snapshots, error ->
-                    if (error != null) {
-                        Log.w("!!!", "Error getting documents.", error)
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to load locations",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        progressBar.visibility =
-                            View.GONE  // Stoppa ProgressBar om det finns ett fel
-                        return@addSnapshotListener
-                    }
 
-                    locationList.clear()
-                    for (document in snapshots!!) {
-                        val location = document.toObject(Location::class.java)
-                        locationList.add(location)
-                    }
+            searchDataBase("")
 
-                    //Set to adapter
-                    val adapter = LocationRecyclerAdapter(requireContext(), locationList)
-                    // Scroll to THIS result
-                    position = SharedData.position
+            //Set to adapter
+            val adapter = LocationRecyclerAdapter(requireContext(), locationList)
+            // Scroll to THIS result
+            position = SharedData.position
 
-                    recyclerView.adapter = adapter
-                    recyclerView.smoothScrollToPosition(position)
-                    //Stop progressBar
-                    progressBar.visibility = View.GONE
-                }
+            recyclerView.adapter = adapter
+            recyclerView.smoothScrollToPosition(position)
 
-        },500)
+        }, 500)
 
         return view
     }
@@ -142,23 +124,30 @@ class ListLocationFragment : Fragment() {
         // Nollställ positionen när du lämnar ListLocationsFragment
 //        SharedData.position = 0
     }
+
     override fun onStart() {
         super.onStart()
 
         // Scroll to SharedData.position
         recyclerView.smoothScrollToPosition(SharedData.position)
     }
+
     override fun onResume() {
         super.onResume()
+        //Start progresBar
+        progressBar.visibility = View.VISIBLE
+
+        searchText.setText("")
 
         // Scroll to SharedData.position
         recyclerView.smoothScrollToPosition(SharedData.position)
     }
+
     private fun setupTextWatcher(editText: TextInputEditText) {
 
         val textWatcher = object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
-                search(searchText.text.toString())
+                searchDataBase(searchText.text.toString())
             }
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -166,76 +155,55 @@ class ListLocationFragment : Fragment() {
             }
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                //search
-
-
+                searchDataBase(searchText.text.toString())
             }
         }
         editText.addTextChangedListener(textWatcher)
     }
-    private fun search(searchThisString: String?){
 
+    private fun handleError(error: Exception?) {
+        Log.w("!!!", "Error getting documents.", error)
+        Toast.makeText(
+            requireContext(),
+            "Failed to load locations",
+            Toast.LENGTH_SHORT
+        ).show()
+        progressBar.visibility = View.GONE  // Stoppa ProgressBar om det finns ett fel
+    }
 
-        if (searchThisString.isNullOrEmpty()) {
-            progressBar.visibility = View.VISIBLE
-            db.collection("locations")
-
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .addSnapshotListener { snapshots, error ->
-                    if (error != null) {
-                        Log.w("!!!", "Error getting documents.", error)
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to load locations",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        progressBar.visibility =
-                            View.GONE  // Stoppa ProgressBar om det finns ett fel
-                        return@addSnapshotListener
-                    }
-
-                    locationList.clear()
-                    for (document in snapshots!!) {
-                        val location = document.toObject(Location::class.java)
-                        locationList.add(location)
-                    }
-
-                    recyclerView.adapter?.notifyDataSetChanged()
-
-                    //Stop progressBar
-                    progressBar.visibility = View.GONE
-                }
+    private fun updateLocations(snapshots: List<DocumentSnapshot>?) {
+        locationList.clear()
+        for (document in snapshots!!) {
+            val location = document.toObject(Location::class.java)
+            if (location != null) {
+                locationList.add(location)
+            }
         }
-        else {
-            //Start progresBar
-            progressBar.visibility = View.VISIBLE
-            db.collection("locations")
-                .whereEqualTo("name", searchThisString)
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .addSnapshotListener { snapshots, error ->
-                    if (error != null) {
-                        Log.w("!!!", "Error getting documents.", error)
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to load locations",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        progressBar.visibility =
-                            View.GONE  // Stoppa ProgressBar om det finns ett fel
-                        return@addSnapshotListener
-                    }
+        //Update adapter with changes
+        recyclerView.adapter?.notifyDataSetChanged()
 
-                    locationList.clear()
-                    for (document in snapshots!!) {
-                        val location = document.toObject(Location::class.java)
-                        locationList.add(location)
-                    }
+        //Stop progressBar
+        progressBar.visibility = View.GONE
+    }
 
-                    recyclerView.adapter?.notifyDataSetChanged()
+    private fun searchDataBase(searchThisString: String?) {
+        progressBar.visibility = View.VISIBLE
+        val query = if (searchThisString.isNullOrEmpty()) {
+            db.collection("locations").orderBy("timestamp", Query.Direction.DESCENDING)
+        } else {
+            //Query firestore after ish-wildcard
+            db.collection("locations").orderBy("name").startAt(searchThisString)
+                .endAt(searchThisString + "\uf8ff")
 
-                    //Stop progressBar
-                    progressBar.visibility = View.GONE
-                }
+        }
+
+        query.addSnapshotListener { snapshots, error ->
+            if (error != null) {
+                handleError(error)
+                return@addSnapshotListener
+            }
+
+            updateLocations(snapshots?.documents)
         }
     }
 }

@@ -32,7 +32,7 @@
                 android:layout_height="194dp"
                 android:contentDescription="New Landing site"
                 android:scaleType="centerCrop"
-                app:srcCompat="@drawable/a1" />
+                app:srcCompat="@drawable/default1" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -41,30 +41,33 @@
                 android:padding="16dp">
 
                 <!-- Title, secondary and supporting text -->
+
+
+
                 <TextView
                     android:id="@+id/titleView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Vara"
-                    android:textAppearance="?attr/textAppearanceTitleMedium" />
+                    android:textAppearance="?attr/textAppearanceTitleLarge" />
 
-                <TextView
-                    android:id="@+id/descriptionView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="New Landing site"
-                    android:textAppearance="?attr/textAppearanceBodyMedium"
-                    android:textColor="?android:attr/textColorSecondary" />
+<!--                <TextView-->
+<!--                    android:id="@+id/descriptionView"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_marginTop="8dp"-->
+<!--                    android:text="New Landing site"-->
+<!--                    android:textAppearance="?attr/textAppearanceBodyMedium"-->
+<!--                    android:textColor="?android:attr/textColorSecondary" />-->
 
-                <TextView
-                    android:id="@+id/dateView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="2023-12-27"
-                    android:textAppearance="?attr/textAppearanceBodyMedium"
-                    android:textColor="?android:attr/textColorSecondary" />
+<!--                <TextView-->
+<!--                    android:id="@+id/dateView"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_marginTop="16dp"-->
+<!--                    android:text="2023-12-27"-->
+<!--                    android:textAppearance="?attr/textAppearanceBodyMedium"-->
+<!--                    android:textColor="?android:attr/textColorSecondary" />-->
 
 
             </LinearLayout>
@@ -95,7 +98,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
 
-                    android:text="Show on map" />
+                    android:text="Map" />
             </LinearLayout>
 
         </LinearLayout>

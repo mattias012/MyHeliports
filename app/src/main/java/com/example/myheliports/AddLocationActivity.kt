@@ -31,12 +31,14 @@ import android.os.Environment
 import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
+import android.widget.RatingBar
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import java.util.*
 
@@ -64,6 +66,7 @@ class AddLocationActivity : AppCompatActivity() {
     lateinit var descriptionOfLocation: TextInputEditText
     lateinit var latOfLocation: TextInputEditText
     lateinit var longOfLocation: TextInputEditText
+    lateinit var ratingView: RatingBar
 
     lateinit var nameOfLocationView: TextInputLayout
     lateinit var dateOfPhotoView: TextInputLayout
@@ -72,7 +75,6 @@ class AddLocationActivity : AppCompatActivity() {
     lateinit var longOfLocationView: TextInputLayout
 
     lateinit var viewsToFade: List<View>
-
 
     private lateinit var photoViewModel: PhotoViewModel
     lateinit var imageView: ImageView
@@ -85,6 +87,7 @@ class AddLocationActivity : AppCompatActivity() {
     var dateOfPhotoTimestamp: Timestamp? = null
     var file: File? = null  // Definiera file här
     var fileURI: Uri? = null
+    var rating: Int? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -96,7 +99,6 @@ class AddLocationActivity : AppCompatActivity() {
         storage = Firebase.storage
 
         initializeViews()
-
         requestPermission()
 
         imageView.setOnClickListener {
@@ -104,13 +106,10 @@ class AddLocationActivity : AppCompatActivity() {
         }
 
         showPhotoView()
-
         handleDate()
-
 
         saveLocationButton.setOnClickListener {
             saveLocation()
-
         }
 
         val topAppBar = findViewById<MaterialToolbar>(R.id.topAppBar)
@@ -121,10 +120,10 @@ class AddLocationActivity : AppCompatActivity() {
         topAppBar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.user -> {
-
+                    val intent = Intent(this, ProfileActivity::class.java)
+                    startActivity(intent)
                     true
                 }
-
                 R.id.help -> {
 
                     MaterialAlertDialogBuilder(this@AddLocationActivity)
@@ -135,11 +134,8 @@ class AddLocationActivity : AppCompatActivity() {
                         }
                         .show()
                     true
-
                 }
-
                 else -> false
-
             }
         }
     }
@@ -271,16 +267,6 @@ class AddLocationActivity : AppCompatActivity() {
     }
 
     private fun createImageFile(): File {
-        // Check for storage permission
-//        if (ContextCompat.checkSelfPermission(
-//                this,
-//                Manifest.permission.WRITE_EXTERNAL_STORAGE
-//            ) != PackageManager.PERMISSION_GRANTED
-//        ) {
-//            // Permission is not granted, request it
-//            requestPermission()
-//            throw SecurityException("WRITE_EXTERNAL_STORAGE permission not granted")
-//        }
 
         // Create an image file name
         val timeStamp: String =
@@ -312,16 +298,6 @@ class AddLocationActivity : AppCompatActivity() {
     }
 
     private fun extractExifData(photoPath: String? = null, uri: Uri? = null) {
-
-//        // Check for storage permission
-//        if (ContextCompat.checkSelfPermission(
-//                this,
-//                Manifest.permission.ACCESS_MEDIA_LOCATION
-//            ) != PackageManager.PERMISSION_GRANTED
-//        ) else {
-//            // Permission is not granted, request it
-//            requestPermission()
-//        }
 
         val exifInterface = when {
             photoPath != null -> ExifInterface(photoPath)
@@ -363,11 +339,6 @@ class AddLocationActivity : AppCompatActivity() {
 
             val latitude = latLong[0]
             val longitude = latLong[1]
-
-//            val latitude = exifInterface.getAttribute(ExifInterface.TAG_GPS_LATITUDE)
-//            val longitude = exifInterface.getAttribute(ExifInterface.TAG_GPS_LONGITUDE)
-
-            Log.d("ExifData", "Date: $dateTaken, Latitude: $latitude, Longitude: $longitude")
 
             latOfLocation.setText(latitude.toString())
             longOfLocation.setText(longitude.toString())
@@ -429,11 +400,25 @@ class AddLocationActivity : AppCompatActivity() {
         val latDouble = lat.toDouble()
         val longDouble = long.toDouble()
 
+        rating = ratingView.numStars
 
-        val fileLocation = if (file != null) {
+        var fileLocation = if (file != null) {
             Uri.fromFile(file)
         } else {
             fileURI
+        }
+
+        if (fileLocation == null) {
+            val defaultImageResId = R.raw.default1
+            val inputStream = resources.openRawResource(defaultImageResId)
+            val defaultFile = File(this.filesDir, "default1.jpg")
+            inputStream.use { input ->
+                defaultFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+
+            fileLocation = Uri.fromFile(defaultFile)
         }
 
         val fileName = fileLocation?.lastPathSegment.toString()  // Detta ger dig filnamnet
@@ -470,7 +455,7 @@ class AddLocationActivity : AppCompatActivity() {
                         description = descriptionOfLocation.text.toString(),
                         lat = latDouble,
                         long = longDouble,
-                        rating = 3,
+                        rating = rating,
                         imageLink = imageUrl,
                         userId = user.uid
                     )
@@ -487,6 +472,7 @@ class AddLocationActivity : AppCompatActivity() {
                             fadeViews(viewsToFade, false)
                             saveLocationButton.isEnabled = true
                         }
+
                 }
             }
         }
@@ -547,6 +533,7 @@ class AddLocationActivity : AppCompatActivity() {
         descriptionOfLocation = findViewById(R.id.descriptionOfLocation)
         latOfLocation = findViewById(R.id.latOfLocation)
         longOfLocation = findViewById(R.id.longOfLocation)
+        ratingView = findViewById(R.id.ratingBar)
 
         saveLocationButton = findViewById(R.id.saveLocationButton)
 
@@ -563,7 +550,8 @@ class AddLocationActivity : AppCompatActivity() {
             dateOfPhoto,
             descriptionOfLocation,
             latOfLocation,
-            longOfLocation
+            longOfLocation,
+            ratingView
         )
 
     }

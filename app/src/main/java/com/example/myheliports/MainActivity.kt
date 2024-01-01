@@ -4,20 +4,30 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import android.widget.Toast.LENGTH_SHORT
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
 class MainActivity : AppCompatActivity() {
 
-    lateinit var auth : FirebaseAuth
-    lateinit var emailView : EditText
-    lateinit var passwordView : EditText
+    private lateinit var auth : FirebaseAuth
+
+    private lateinit var emailView : TextInputLayout
+    private lateinit var passwordView : TextInputLayout
+    private lateinit var email: TextInputEditText
+    private lateinit var password: TextInputEditText
+
+    private lateinit var viewsToFade: List<View>
+
     lateinit var signupView : TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,12 +36,10 @@ class MainActivity : AppCompatActivity() {
 
         auth = Firebase.auth
 
-        emailView = findViewById(R.id.emailText)
-        passwordView = findViewById(R.id.passwordText)
-        signupView = findViewById(R.id.sigupView)
+        initilizeViews()
 
         signupView.setOnClickListener {
-            signUp()
+            goToSignUp()
         }
 
         val loginButton = findViewById<Button>(R.id.loginButton)
@@ -44,50 +52,72 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, StartActivity::class.java)
             startActivity(intent)
         }
-
     }
 
-    fun login(){
-        val email = emailView.text.toString()
-        val password = passwordView.text.toString()
+    private fun login() {
+        val emailLogin = email.text.toString()
+        val passwordLogin = password.text.toString()
 
-        if (email.isEmpty() || password.isEmpty()){
+        if (emailLogin.isEmpty()) {
+            return
+        }
+        val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
+        if (!emailLogin.matches(emailPattern.toRegex())) {
+            return
+        }
+        if (passwordLogin.isEmpty() || passwordLogin.length < 8) {
             return
         }
 
-        auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful){
+        emailView.error = null
+        passwordView.error = null
 
+        val progressBar = findViewById<ProgressBar>(R.id.progressBar)
+
+        progressBar.visibility = View.VISIBLE
+        fadeViews(viewsToFade, true)
+
+            auth.signInWithEmailAndPassword(emailLogin, passwordLogin)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+
+                    progressBar.visibility = View.GONE
                     val intent = Intent(this, StartActivity::class.java)
                     startActivity(intent)
 
                 } else {
                     Log.d("!!!", "user not logged in ${task.exception}")
+                    progressBar.visibility = View.GONE
+                    emailView.error = "Wrong e-mail or password"
+                    passwordView.error = "Wrong e-mail or password"
+                    fadeViews(viewsToFade, false)
                 }
             }
     }
+    private fun goToSignUp(){
+        val intent = Intent(this, SignupActivity::class.java)
+        startActivity(intent)
+    }
+    private fun fadeViews(views: List<View>, fadeOut: Boolean) {
+        val alphaValue = if (fadeOut) 0.5f else 1f
 
-    fun signUp(){
-        val email = emailView.text.toString()
-        val password = passwordView.text.toString()
-
-        if (email.isEmpty() || password.isEmpty()){
-            return
+        views.forEach { view ->
+            view.animate()
+                .alpha(alphaValue)
+                .setDuration(2000)
+                .setListener(null)
         }
+    }
+    private fun initilizeViews(){
+        emailView = findViewById(R.id.emailView)
+        passwordView = findViewById(R.id.passwordView)
 
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-            if (task.isSuccessful){
-                Toast.makeText(this, "User created", LENGTH_SHORT).show()
+        email = findViewById(R.id.email)
+        password = findViewById(R.id.password)
 
-                val intent = Intent(this, StartActivity::class.java)
-                startActivity(intent)
+        viewsToFade = listOf(
+            emailView, passwordView, email, password)
 
-            } else {
-                Log.d("!!!", "user not created ${task.exception}")
-            }
-        }
-
+        signupView = findViewById(R.id.sigupView)
     }
 }

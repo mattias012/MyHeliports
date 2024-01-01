@@ -10,7 +10,7 @@
 <!--        />-->
 
     <item
-        android:id="@+id/list"
+        android:id="@+id/current"
         android:icon="@drawable/baseline_format_list_bulleted_24"
         android:title="List"
         android:contentDescription="List view"
@@ -18,8 +18,8 @@
         />
 
     <item
-        android:id="@+id/grid"
-        android:icon="@drawable/baseline_grid_view_24"
+        android:id="@+id/help"
+        android:icon="@drawable/baseline_help_24"
         android:title="Help"
         android:contentDescription="Grid view"
         app:showAsAction="ifRoom"

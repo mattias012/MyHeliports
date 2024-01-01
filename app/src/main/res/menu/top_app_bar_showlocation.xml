@@ -10,22 +10,21 @@
 <!--        />-->
 
     <item
-        android:id="@+id/list"
-        android:icon="@drawable/baseline_format_list_bulleted_24"
-        android:title="List"
-        android:contentDescription="List view"
+        android:id="@+id/edit"
+        android:icon="@drawable/baseline_edit_note_24"
+        android:title="Edit Location"
+        android:contentDescription="Edit Location"
         app:showAsAction="ifRoom"
         />
+
 
     <item
-        android:id="@+id/grid"
-        android:icon="@drawable/baseline_grid_view_24"
-        android:title="Help"
-        android:contentDescription="Grid view"
+        android:id="@+id/share"
+        android:icon="@drawable/baseline_share_24"
+        android:title="Share Location"
+        android:contentDescription="Share Location"
         app:showAsAction="ifRoom"
         />
-
-
 
     <item
         android:id="@+id/user"

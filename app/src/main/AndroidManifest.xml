@@ -37,7 +37,8 @@
             android:exported="false" />
         <activity
             android:name=".StartActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"/>
         <activity
             android:name=".SignupActivity"
             android:exported="false" />

@@ -55,7 +55,13 @@ class ListLocationFragment : Fragment() {
 
         val view = inflater.inflate(R.layout.fragment_listlocation, container, false)
         recyclerView = view.findViewById(R.id.listOfLocationsView)
-        recyclerView.layoutManager = GridLayoutManager(requireContext(), columnsInGrid)
+
+        val context = context
+        if (context != null) {
+            recyclerView.layoutManager = GridLayoutManager(context, columnsInGrid)
+//            recyclerView.layoutManager = GridLayoutManager(requireContext(), columnsInGrid)
+        }
+
         progressBar = view.findViewById(R.id.progressBar)
         searchView = view.findViewById(R.id.search)
         searchText = view.findViewById(R.id.searchText)

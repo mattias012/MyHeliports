@@ -81,7 +81,7 @@ class StartActivity : AppCompatActivity() {
         }
 
         transaction.commit()
-
+//        transaction.commitAllowingStateLoss()
     }
 
     fun showLocationFragment(documentId: String) {

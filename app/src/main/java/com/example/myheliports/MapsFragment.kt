@@ -13,7 +13,9 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
 import androidx.fragment.app.FragmentActivity
+import androidx.navigation.Navigation.findNavController
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 
@@ -33,7 +35,7 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.ktx.storage
 
-class MapsFragment : Fragment() {
+class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchListener  {
     companion object {
         private const val REQUEST_ALL_PERMISSIONS = 101
     }
@@ -63,14 +65,27 @@ class MapsFragment : Fragment() {
                     val marker = googleMap.addMarker(MarkerOptions().position(markerLatLng).title(locationName))
                     marker?.tag = location
                 }
+
             }
 
-            val locationsAdapter = MarkerInfoWindowAdapter(requireContext())
+            val locationsAdapter = MarkerInfoWindowAdapter(requireContext(), this)
             googleMap.setInfoWindowAdapter(locationsAdapter)
+
+            googleMap.setOnInfoWindowClickListener { marker ->
+                val location = marker.tag as? Location
+                val documentId = location?.documentId
+                if (documentId != null) {
+                    onLinkClicked(documentId)
+                } else {
+                    Toast.makeText(context, "Something went wrong when loading location", Toast.LENGTH_SHORT).show()
+                }
+            }
+
         }
         moveCameraToCurrentLocation()
 
     }
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -80,6 +95,9 @@ class MapsFragment : Fragment() {
 
         db = Firebase.firestore
         storage = Firebase.storage
+
+        //Remember where user comes from
+        SharedData.fragment = this
 
         val view = inflater.inflate(R.layout.fragment_maps, container, false)
 
@@ -220,5 +238,12 @@ class MapsFragment : Fragment() {
                 }
             }
         }
+    }
+
+    override fun onLinkClicked(documentId: String) {
+        // Navigera till ShowLocation med documentId
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.container, ShowLocationFragment.newInstance(documentId))
+            .commit()
     }
 }

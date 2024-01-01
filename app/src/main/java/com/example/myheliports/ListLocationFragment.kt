@@ -54,6 +54,9 @@ class ListLocationFragment : Fragment() {
         db = Firebase.firestore
         auth = Firebase.auth
 
+        //Remember where user comes from
+        SharedData.fragment = this
+
         val view = inflater.inflate(R.layout.fragment_listlocation, container, false)
         recyclerView = view.findViewById(R.id.listOfLocationsView)
         recyclerView.layoutManager = GridLayoutManager(requireContext(), columnsInGrid)

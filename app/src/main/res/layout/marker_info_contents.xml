@@ -8,19 +8,11 @@
     android:gravity="center_horizontal"
     android:padding="8dp">
 
-    <ImageView
-        android:id="@+id/markerImageView"
-        android:layout_width="match_parent"
-        android:layout_height="150dp"
-        app:layout_constraintBottom_toTopOf="@+id/text_view_title"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:srcCompat="@drawable/default1" />
+
 
     <TextView
         android:id="@+id/text_view_title"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:textColor="@android:color/black"
@@ -28,12 +20,12 @@
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/markerImageView"
+        app:layout_constraintTop_toTopOf="parent"
         tools:text="Title" />
 
     <TextView
         android:id="@+id/text_view_address"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="@android:color/black"
         android:textSize="16sp"
@@ -43,14 +35,14 @@
         tools:text="123 Main Street" />
 
     <TextView
-        android:id="@+id/text_view_rating"
-        android:layout_width="wrap_content"
+        android:id="@+id/text_view_link"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="@android:color/black"
         android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_view_address"
-        tools:text="Rating: 3" />
+        tools:text="View this spot" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

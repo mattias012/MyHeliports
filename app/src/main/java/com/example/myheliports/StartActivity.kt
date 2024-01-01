@@ -70,7 +70,7 @@ class StartActivity : AppCompatActivity() {
         }
     }
 
-    private fun showFragment(containerId: Int, fragment: Fragment, isOnCreate: Boolean) {
+    fun showFragment(containerId: Int, fragment: Fragment, isOnCreate: Boolean) {
 
         val transaction = supportFragmentManager.beginTransaction()
 

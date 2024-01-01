@@ -49,6 +49,18 @@ class ShowLocationFragment : Fragment() {
 
     private lateinit var db: FirebaseFirestore
 
+
+    companion object {
+        fun newInstance(documentId: String): ShowLocationFragment {
+            val fragment = ShowLocationFragment()
+
+            val args = Bundle()
+            args.putString("documentId", documentId)
+            fragment.arguments = args
+
+            return fragment
+        }
+    }
     override fun onCreateView(
 
         inflater: LayoutInflater,
@@ -261,7 +273,18 @@ class ShowLocationFragment : Fragment() {
     }
 
     private fun goBackStuff() {
-        (activity as StartActivity).goBack()
+        when (SharedData.fragment) {
+            is MapsFragment -> {
+                (activity as StartActivity).showFragment(R.id.container, MapsFragment(), false)
+            }
+            is ListLocationFragment -> {
+                (activity as StartActivity).goBack()
+            }
+            else -> {
+                (activity as StartActivity).goBack()
+            }
+        }
+        SharedData.fragment = null
     }
 
     private fun setupThisFragment(fragmentact: FragmentActivity) {

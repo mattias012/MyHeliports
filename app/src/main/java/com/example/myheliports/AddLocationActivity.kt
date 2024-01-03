@@ -255,9 +255,10 @@ class AddLocationActivity : AppCompatActivity() {
 
             // Continue only if the File was successfully created
             photoFile?.let {
+
                 val photoURI: Uri = FileProvider.getUriForFile(
                     this,
-                    "com.example.android.fileprovider",
+                    "com.example.myheliports.fileprovider",
                     it
                 )
                 cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)

@@ -1,5 +1,7 @@
 package com.example.myheliports
 
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -8,6 +10,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.ProgressBar
@@ -120,7 +124,17 @@ class ShowLocationFragment : Fragment() {
             commentButton.setOnClickListener {
                 addComment(documentId)
                 fadeViews(viewsToFade, true)
-                it.isEnabled = false
+                hideKeyboard()
+            }
+            commentThis.setOnEditorActionListener { _, actionId, _ ->
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    hideKeyboard()
+                    addComment(documentId)
+                    fadeViews(viewsToFade, true)
+                    true
+                } else {
+                    false
+                }
             }
 
         }
@@ -196,13 +210,26 @@ class ShowLocationFragment : Fragment() {
         return titleOfLocationIs
 
     }
-
+    fun Fragment.hideKeyboard() {
+        val inputMethodManager = activity?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+        val currentFocusedView = activity?.currentFocus
+        currentFocusedView?.let {
+            inputMethodManager?.hideSoftInputFromWindow(it.windowToken, InputMethodManager.HIDE_NOT_ALWAYS)
+        }
+    }
     private fun addComment(locationId: String) {
         val user = auth.currentUser
 
         val commentThisString = commentThis.text.toString()
 
         progressBar.visibility = View.VISIBLE
+
+        commentButton.isEnabled = false
+        commentThis.isEnabled = false
+        commentThis.setText("")
+
+
+
 
         if (user == null) {
             // Visa ett felmeddelande eller på annat sätt hantera situationen
@@ -224,6 +251,7 @@ class ShowLocationFragment : Fragment() {
                     recyclerViewComments.adapter?.notifyDataSetChanged()
                     fadeViews(viewsToFade, false)
                     commentButton.isEnabled = true
+                    commentThis.isEnabled = true
                 }
                 .addOnFailureListener { e ->
                     Log.w("!!!", "Error adding document", e)

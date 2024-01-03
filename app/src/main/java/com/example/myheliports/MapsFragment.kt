@@ -211,7 +211,7 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
         topAppBar.inflateMenu(R.menu.top_app_bar_map); // add new menu
         topAppBar.title = "Map"
         addItemButton = fragmentact.findViewById(R.id.addItemButton)
-        addItemButton.hide()
+       // addItemButton.hide()
         topAppBar.navigationIcon = null
     }
 

@@ -26,6 +26,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import kotlin.math.log
 
 class ListLocationFragment : Fragment() {
 
@@ -41,6 +42,7 @@ class ListLocationFragment : Fragment() {
     //standard setting is grid view
     var columnsInGrid = 2
     var position = 0
+    var getAll = true
 
     private var safeContext: Context? = null
     override fun onCreateView(
@@ -94,6 +96,16 @@ class ListLocationFragment : Fragment() {
                         toggleViewMode(1)
                         true
                     }
+                    R.id.person -> {
+
+                        getAllData(columnsInGrid, false)
+                        true
+                    }
+                    R.id.group -> {
+
+                        getAllData(columnsInGrid, true)
+                        true
+                    }
 
                     else -> false
                 }
@@ -104,7 +116,7 @@ class ListLocationFragment : Fragment() {
         //Add a short delay, otherwise it goes too fast if we have few places...
 //        Handler(Looper.getMainLooper()).postDelayed({
 
-            searchDataBase("")
+            searchDataBase("", getAll)
 
             //Set to adapter
             if (safeContext != null) {
@@ -120,6 +132,18 @@ class ListLocationFragment : Fragment() {
         return view
     }
 
+    private fun getAllData(numberOfColumns: Int, allData: Boolean){
+        if (safeContext != null) {
+            getAll = allData
+            searchDataBase("", allData)
+            recyclerView.layoutManager = GridLayoutManager(requireContext(), numberOfColumns)
+
+            //Update adapter
+            recyclerView.adapter?.notifyDataSetChanged()
+
+            columnsInGrid = numberOfColumns
+        }
+    }
     private fun toggleViewMode(columns: Int) {
 
         //New layoutmanager with number of columns
@@ -137,7 +161,6 @@ class ListLocationFragment : Fragment() {
     override fun onPause() {
         super.onPause()
 
-        // Nollställ positionen när du lämnar ListLocationsFragment
 //        SharedData.position = 0
     }
 
@@ -163,7 +186,7 @@ class ListLocationFragment : Fragment() {
 
         val textWatcher = object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
-                searchDataBase(searchText.text.toString())
+                searchDataBase(searchText.text.toString(), getAll)
             }
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -171,7 +194,7 @@ class ListLocationFragment : Fragment() {
             }
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                searchDataBase(searchText.text.toString())
+                searchDataBase(searchText.text.toString(), getAll)
             }
         }
         editText.addTextChangedListener(textWatcher)
@@ -192,10 +215,12 @@ class ListLocationFragment : Fragment() {
 
     private fun updateLocations(snapshots: List<DocumentSnapshot>?) {
         locationList.clear()
-        for (document in snapshots!!) {
-            val location = document.toObject(Location::class.java)
-            if (location != null) {
-                locationList.add(location)
+        if (snapshots != null) {
+            for (document in snapshots) {
+                val location = document.toObject(Location::class.java)
+                if (location != null) {
+                    locationList.add(location)
+                }
             }
         }
         //Update adapter with changes
@@ -205,16 +230,63 @@ class ListLocationFragment : Fragment() {
         progressBar.visibility = View.GONE
     }
 
-    private fun searchDataBase(searchThisString: String?) {
+    private fun searchDataBase(searchThisString: String?, getAll: Boolean) {
         progressBar.visibility = View.VISIBLE
+
+        Log.d("!!!", "searching for this name")
         val query = if (searchThisString.isNullOrEmpty()) {
-            db.collection("locations").orderBy("timestamp", Query.Direction.DESCENDING)
+
+            if(getAll) {
+                db.collection("locations").orderBy("timestamp", Query.Direction.DESCENDING)
+            }
+            else {
+                val user =  auth.currentUser
+                if (user != null) {
+                    db.collection("locations").whereEqualTo("userId", user.uid)
+                        .orderBy("timestamp", Query.Direction.DESCENDING)
+                }
+                else {
+                    db.collection("locations").orderBy("timestamp", Query.Direction.DESCENDING)
+                }
+            }
         } else {
             //Query firestore after ish-wildcard
-            db.collection("locations").orderBy("name").startAt(searchThisString)
-                .endAt(searchThisString + "\uf8ff")
+            if (getAll) {
+                db.collection("locations").orderBy("name").startAt(searchThisString)
+                    .endAt(searchThisString + "\uf8ff")
+            } else {
+                val user =  auth.currentUser
+                if (user !=null) {
+                    db.collection("locations").whereEqualTo("userId", user.uid).orderBy("name")
+                        .startAt(searchThisString)
+                        .endAt(searchThisString + "\uf8ff")
+                }
+                else {
+                    db.collection("locations").orderBy("name").startAt(searchThisString)
+                        .endAt(searchThisString + "\uf8ff")
+                }
+            }
 
         }
+
+
+//        Log.d("!!!", "searching for this name")
+//        val query = if (searchThisString.isNullOrEmpty()) {
+//            val base = baseQuery("locations", "timestamp", Query.Direction.DESCENDING)
+//            if(getAll) {
+//                base
+//            }
+//            else {
+//                addUserFilter(base)
+//            }
+//        } else {
+//            val base = baseQuery("locations", "name", Query.Direction.ASCENDING).startAt(searchThisString).endAt(searchThisString + "\uf8ff")
+//            if (getAll) {
+//                base
+//            } else {
+//                addUserFilter(base)
+//            }
+//        }
 
         query.addSnapshotListener { snapshots, error ->
             if (error != null) {
@@ -225,4 +297,16 @@ class ListLocationFragment : Fragment() {
             updateLocations(snapshots?.documents)
         }
     }
+//   private fun baseQuery(collection: String, orderField: String, direction: Query.Direction): Query {
+//        return db.collection(collection).orderBy(orderField, direction)
+//    }
+//    private fun addUserFilter(query: Query): Query {
+//        val user = auth.currentUser
+//        return if (user != null) {
+//            Log.d("!!!", "${user.uid}")
+//            db.collection("locations").whereEqualTo("userId", user.uid).orderBy("ditt fält", query)
+//        } else {
+//            query
+//        }
+//    }
 }

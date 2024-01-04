@@ -10,9 +10,23 @@
 <!--        />-->
 
     <item
+        android:id="@+id/person"
+        android:icon="@drawable/baseline_person_24"
+        android:title="Your places"
+        android:contentDescription="List your places only"
+        app:showAsAction="never"
+        />
+    <item
+        android:id="@+id/group"
+        android:icon="@drawable/baseline_groups_24"
+        android:title="All users places"
+        android:contentDescription="All places view"
+        app:showAsAction="never"
+        />
+    <item
         android:id="@+id/list"
         android:icon="@drawable/baseline_format_list_bulleted_24"
-        android:title="List"
+        android:title="List View"
         android:contentDescription="List view"
         app:showAsAction="ifRoom"
         />
@@ -20,7 +34,7 @@
     <item
         android:id="@+id/grid"
         android:icon="@drawable/baseline_grid_view_24"
-        android:title="Help"
+        android:title="Grid View"
         android:contentDescription="Grid view"
         app:showAsAction="ifRoom"
         />
@@ -30,7 +44,7 @@
     <item
         android:id="@+id/user"
         android:contentDescription="User profile"
-        app:showAsAction="ifRoom"
+        app:showAsAction="never"
         android:title="Profile"
         android:icon="@drawable/baseline_person_pin_24"
       />

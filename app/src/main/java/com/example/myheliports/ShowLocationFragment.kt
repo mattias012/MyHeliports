@@ -229,9 +229,6 @@ class ShowLocationFragment : Fragment() {
         commentThis.isEnabled = false
         commentThis.setText("")
 
-
-
-
         if (user == null) {
             // Visa ett felmeddelande eller på annat sätt hantera situationen
             Log.w("!!!", "User not signed in")
@@ -242,7 +239,7 @@ class ShowLocationFragment : Fragment() {
                 comment = commentThisString,
                 locationId = locationId
             )
-
+            Log.d("!!!", "adding comment")
             db.collection("comments").add(comment)
                 .addOnSuccessListener { documentReference ->
                     Log.d("!!!", "DocumentSnapshot added with ID: ${documentReference.id}")

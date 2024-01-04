@@ -45,6 +45,7 @@ class ListLocationFragment : Fragment() {
     var getAll = true
 
     private var safeContext: Context? = null
+
     override fun onCreateView(
 
         inflater: LayoutInflater,
@@ -120,7 +121,12 @@ class ListLocationFragment : Fragment() {
 
             //Set to adapter
             if (safeContext != null) {
-                val adapter = LocationRecyclerAdapter(requireContext(), locationList)
+                val adapter = LocationRecyclerAdapter(requireContext(), locationList, object :
+                    LocationRecyclerAdapter.OnMapClickListener {
+                    override fun onMapClick(documentId: String) {
+                        (activity as? StartActivity)?.showMapsFragment(documentId)
+                    }
+                })
                 // Scroll to THIS result
                 position = SharedData.position
 

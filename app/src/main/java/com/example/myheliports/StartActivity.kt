@@ -17,9 +17,8 @@ class StartActivity : AppCompatActivity() {
     lateinit var addItemButton: FloatingActionButton
     lateinit var topAppBar: MaterialToolbar
 
-    val listLocationFragment = ListLocationFragment()
-    val mapsFragment = MapsFragment()
-
+    private val listLocationFragment = ListLocationFragment()
+    private val mapsFragment = MapsFragment()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_start)
@@ -94,6 +93,16 @@ class StartActivity : AppCompatActivity() {
         fragment.arguments = args
         val transaction = supportFragmentManager.beginTransaction()
         transaction.replace(R.id.container, fragment, "ShowLocationFragment")
+        transaction.addToBackStack(null) // Lägg till transactionen till back stack så att användaren kan navigera tillbaka
+        transaction.commit()
+    }
+    fun showMapsFragment(documentId: String) {
+        val fragment = MapsFragment()
+        val args = Bundle()
+        args.putString("documentId", documentId)
+        fragment.arguments = args
+        val transaction = supportFragmentManager.beginTransaction()
+        transaction.replace(R.id.container, fragment, "MapsFragment")
         transaction.addToBackStack(null) // Lägg till transactionen till back stack så att användaren kan navigera tillbaka
         transaction.commit()
     }

@@ -1,6 +1,8 @@
 package com.example.myheliports
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,12 +10,16 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.google.android.material.button.MaterialButton
 
-class LocationRecyclerAdapter(private val context: Context, private val locationList: List<Location>) :
+class LocationRecyclerAdapter(private val context: Context, private val locationList: List<Location>, private val onMapClickListener: OnMapClickListener) :
     RecyclerView.Adapter<LocationRecyclerAdapter.ViewHolder>() {
 
     private var layoutInflater = LayoutInflater.from(context)
 
+    interface OnMapClickListener {
+        fun onMapClick(documentId: String)
+    }
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
@@ -34,14 +40,13 @@ class LocationRecyclerAdapter(private val context: Context, private val location
             SharedData.position = position
             (it.context as StartActivity).showLocationFragment(documentId)
         }
-//        holder.descriptionView?.text = location.description
-//
-//        val date = location.dateOfPhoto?.toDate()
-//        val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-//        val dateString = format.format(date)
-//
-//        holder.dateView?.text = dateString
 
+        holder.viewOnMap.text = "Map"
+        holder.viewOnMap.tag = location.documentId
+        holder.viewOnMap.setOnClickListener {
+            val documentId = it.tag as String
+            onMapClickListener.onMapClick(documentId)
+        }
 
         if(location.imageLink != null) {
             Glide.with(holder.itemView.context).load(location.imageLink).into(holder.imageView)
@@ -62,5 +67,6 @@ class LocationRecyclerAdapter(private val context: Context, private val location
 //        var descriptionView: TextView? = itemView.findViewById<TextView>(R.id.descriptionView)
 //        var dateView: TextView? = itemView.findViewById<TextView>(R.id.dateView)
         var imageView: ImageView = itemView.findViewById<ImageView>(R.id.imageView)
+        var viewOnMap: MaterialButton = itemView.findViewById<MaterialButton>(R.id.viewLocationOnMap)
     }
 }

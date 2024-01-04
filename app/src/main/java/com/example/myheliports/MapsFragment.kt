@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.Navigation.findNavController
+import com.bumptech.glide.Glide
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 
@@ -89,8 +90,15 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
                 }
             }
         }
-        moveCameraToCurrentLocation()
 
+        val documentId = arguments?.getString("documentId")
+
+        if (documentId != null){
+            moveCameraToLocation(documentId)
+        }
+        else {
+            moveCameraToCurrentLocation()
+        }
     }
 
 
@@ -118,6 +126,34 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
         super.onViewCreated(view, savedInstanceState)
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
         mapFragment?.getMapAsync(callback)
+    }
+    private fun moveCameraToLocation(documentId: String){
+        if (documentId != null){
+            db.collection("locations").document(documentId).get()
+                .addOnSuccessListener { document ->
+
+                    val location = document.toObject(Location::class.java)
+                    location?.let {
+
+                        val currentLatLng = location.lat?.let { it1 -> location.long?.let { it2 ->
+                            LatLng(it1,
+                                it2
+                            )
+                        } }
+                        val cameraUpdate =
+                            currentLatLng?.let { it1 -> CameraUpdateFactory.newLatLngZoom(it1, 12f) }
+                        if (cameraUpdate != null) {
+                            googleMap.moveCamera(cameraUpdate)
+                        }
+
+                    } ?: run {
+                        Log.d("!!!", "No such document")
+                    }
+                }
+                .addOnFailureListener { exception ->
+                    Log.d("!!!", "GET failed with ", exception)
+                }
+        }
     }
 
     private fun moveCameraToCurrentLocation() {
@@ -157,7 +193,7 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
         }
     }
 
-     fun checkPermissions(): Boolean {
+     private fun checkPermissions(): Boolean {
         return ContextCompat.checkSelfPermission(
             requireContext(),
             Manifest.permission.ACCESS_COARSE_LOCATION

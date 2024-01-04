@@ -396,6 +396,7 @@ class ShowLocationFragment : Fragment() {
         when (SharedData.fragment) {
             is MapsFragment -> {
                 (activity as StartActivity).showFragment(R.id.container, MapsFragment(), false)
+                addItemButton.show()
             }
 
             is ListLocationFragment -> {

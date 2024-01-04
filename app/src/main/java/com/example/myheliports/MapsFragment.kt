@@ -259,7 +259,7 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
     }
 
     override fun onLinkClicked(documentId: String) {
-        // Navigera till ShowLocation med documentId
+        //Navigate to ShowLocation with documentId
         parentFragmentManager.beginTransaction()
             .replace(R.id.container, ShowLocationFragment.newInstance(documentId))
             .commit()

@@ -269,25 +269,6 @@ class ListLocationFragment : Fragment() {
 
         }
 
-
-//        Log.d("!!!", "searching for this name")
-//        val query = if (searchThisString.isNullOrEmpty()) {
-//            val base = baseQuery("locations", "timestamp", Query.Direction.DESCENDING)
-//            if(getAll) {
-//                base
-//            }
-//            else {
-//                addUserFilter(base)
-//            }
-//        } else {
-//            val base = baseQuery("locations", "name", Query.Direction.ASCENDING).startAt(searchThisString).endAt(searchThisString + "\uf8ff")
-//            if (getAll) {
-//                base
-//            } else {
-//                addUserFilter(base)
-//            }
-//        }
-
         query.addSnapshotListener { snapshots, error ->
             if (error != null) {
                 handleError(error)
@@ -297,16 +278,4 @@ class ListLocationFragment : Fragment() {
             updateLocations(snapshots?.documents)
         }
     }
-//   private fun baseQuery(collection: String, orderField: String, direction: Query.Direction): Query {
-//        return db.collection(collection).orderBy(orderField, direction)
-//    }
-//    private fun addUserFilter(query: Query): Query {
-//        val user = auth.currentUser
-//        return if (user != null) {
-//            Log.d("!!!", "${user.uid}")
-//            db.collection("locations").whereEqualTo("userId", user.uid).orderBy("ditt fält", query)
-//        } else {
-//            query
-//        }
-//    }
 }

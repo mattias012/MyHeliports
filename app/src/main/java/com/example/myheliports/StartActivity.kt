@@ -17,6 +17,9 @@ class StartActivity : AppCompatActivity() {
     lateinit var addItemButton: FloatingActionButton
     lateinit var topAppBar: MaterialToolbar
 
+    val listLocationFragment = ListLocationFragment()
+    val mapsFragment = MapsFragment()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_start)
@@ -37,13 +40,13 @@ class StartActivity : AppCompatActivity() {
         bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.item_1 -> {
-                    showFragment(R.id.container, ListLocationFragment(), false)
+                    showFragment(R.id.container, listLocationFragment, false)
                     setupTopBar()
                     true
                 }
 
                 R.id.item_2 -> {
-                    showFragment(R.id.container, MapsFragment(), false)
+                    showFragment(R.id.container, mapsFragment, false)
                     true
                 }
 

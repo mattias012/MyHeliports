@@ -33,6 +33,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import java.text.SimpleDateFormat
@@ -265,7 +266,7 @@ class ShowLocationFragment : Fragment() {
     private fun showComments(locationId: String) {
 
         commentList.clear()
-        db.collection("comments").whereEqualTo("locationId", locationId).get()
+        db.collection("comments").whereEqualTo("locationId", locationId).orderBy("timestamp", Query.Direction.DESCENDING).get()
             .addOnSuccessListener { documents ->
                 for (document in documents) {
                     val comment = document.toObject(Comment::class.java)

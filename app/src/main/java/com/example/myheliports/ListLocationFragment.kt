@@ -1,5 +1,6 @@
 package com.example.myheliports
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -40,12 +41,16 @@ class ListLocationFragment : Fragment() {
     //standard setting is grid view
     var columnsInGrid = 2
     var position = 0
+
+    private var safeContext: Context? = null
     override fun onCreateView(
 
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+
+        safeContext = context
 
         db = Firebase.firestore
         auth = Firebase.auth
@@ -59,7 +64,7 @@ class ListLocationFragment : Fragment() {
         val context = context
         if (context != null) {
             recyclerView.layoutManager = GridLayoutManager(context, columnsInGrid)
-//            recyclerView.layoutManager = GridLayoutManager(requireContext(), columnsInGrid)
+//            recyclerView.layoutManager = GridLayoutManager(safeContext, columnsInGrid)
         }
 
         progressBar = view.findViewById(R.id.progressBar)
@@ -73,8 +78,10 @@ class ListLocationFragment : Fragment() {
             topAppBar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.user -> {
-                        val intent = Intent(requireContext(), ProfileActivity::class.java)
-                        startActivity(intent)
+                        if (safeContext != null) {
+                            val intent = Intent(requireContext(), ProfileActivity::class.java)
+                            startActivity(intent)
+                        }
                         true
                     }
 
@@ -95,19 +102,20 @@ class ListLocationFragment : Fragment() {
         setupTextWatcher(searchText)
 
         //Add a short delay, otherwise it goes too fast if we have few places...
-        Handler(Looper.getMainLooper()).postDelayed({
+//        Handler(Looper.getMainLooper()).postDelayed({
 
             searchDataBase("")
 
             //Set to adapter
-            val adapter = LocationRecyclerAdapter(requireContext(), locationList)
-            // Scroll to THIS result
-            position = SharedData.position
+            if (safeContext != null) {
+                val adapter = LocationRecyclerAdapter(requireContext(), locationList)
+                // Scroll to THIS result
+                position = SharedData.position
 
-            recyclerView.adapter = adapter
-            recyclerView.smoothScrollToPosition(position)
-
-        }, 500)
+                recyclerView.adapter = adapter
+                recyclerView.smoothScrollToPosition(position)
+            }
+//        }, 500)
 
         return view
     }
@@ -115,12 +123,15 @@ class ListLocationFragment : Fragment() {
     private fun toggleViewMode(columns: Int) {
 
         //New layoutmanager with number of columns
-        recyclerView.layoutManager = GridLayoutManager(requireContext(), columns)
+        //
+        if (safeContext != null) {
+            recyclerView.layoutManager = GridLayoutManager(requireContext(), columns)
 
-        //Update adapter
-        recyclerView.adapter?.notifyDataSetChanged()
+            //Update adapter
+            recyclerView.adapter?.notifyDataSetChanged()
 
-        columnsInGrid = columns
+            columnsInGrid = columns
+        }
     }
 
     override fun onPause() {
@@ -168,11 +179,14 @@ class ListLocationFragment : Fragment() {
 
     private fun handleError(error: Exception?) {
         Log.w("!!!", "Error getting documents.", error)
-        Toast.makeText(
-            requireContext(),
-            "Failed to load locations",
-            Toast.LENGTH_SHORT
-        ).show()
+
+        if (safeContext != null) {
+            Toast.makeText(
+                requireContext(),
+                "Failed to load locations",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
         progressBar.visibility = View.GONE  // Stoppa ProgressBar om det finns ett fel
     }
 

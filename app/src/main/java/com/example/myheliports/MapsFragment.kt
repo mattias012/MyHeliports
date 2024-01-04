@@ -69,19 +69,25 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
 
             }
 
-            val locationsAdapter = MarkerInfoWindowAdapter(requireContext(), this)
-            googleMap.setInfoWindowAdapter(locationsAdapter)
+            val safeContext = context
+            if (safeContext != null) {
+                val locationsAdapter = MarkerInfoWindowAdapter(requireContext(), this)
+                googleMap.setInfoWindowAdapter(locationsAdapter)
 
-            googleMap.setOnInfoWindowClickListener { marker ->
-                val location = marker.tag as? Location
-                val documentId = location?.documentId
-                if (documentId != null) {
-                    onLinkClicked(documentId)
-                } else {
-                    Toast.makeText(context, "Something went wrong when loading location", Toast.LENGTH_SHORT).show()
+                googleMap.setOnInfoWindowClickListener { marker ->
+                    val location = marker.tag as? Location
+                    val documentId = location?.documentId
+                    if (documentId != null) {
+                        onLinkClicked(documentId)
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "Something went wrong when loading location",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             }
-
         }
         moveCameraToCurrentLocation()
 

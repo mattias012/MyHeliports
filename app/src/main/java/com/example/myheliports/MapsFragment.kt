@@ -26,6 +26,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
@@ -68,19 +69,25 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
 
             }
 
-            val locationsAdapter = MarkerInfoWindowAdapter(requireContext(), this)
-            googleMap.setInfoWindowAdapter(locationsAdapter)
+            val safeContext = context
+            if (safeContext != null) {
+                val locationsAdapter = MarkerInfoWindowAdapter(requireContext(), this)
+                googleMap.setInfoWindowAdapter(locationsAdapter)
 
-            googleMap.setOnInfoWindowClickListener { marker ->
-                val location = marker.tag as? Location
-                val documentId = location?.documentId
-                if (documentId != null) {
-                    onLinkClicked(documentId)
-                } else {
-                    Toast.makeText(context, "Something went wrong when loading location", Toast.LENGTH_SHORT).show()
+                googleMap.setOnInfoWindowClickListener { marker ->
+                    val location = marker.tag as? Location
+                    val documentId = location?.documentId
+                    if (documentId != null) {
+                        onLinkClicked(documentId)
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "Something went wrong when loading location",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             }
-
         }
         moveCameraToCurrentLocation()
 
@@ -121,11 +128,11 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
                     LocationServices.getFusedLocationProviderClient(requireContext())
                 currentPositionUser.lastLocation.addOnSuccessListener { location ->
                     val currentLatLng = LatLng(location.latitude, location.longitude)
-                    val cameraUpdate = CameraUpdateFactory.newLatLngZoom(currentLatLng, 10f)
+                    val cameraUpdate = CameraUpdateFactory.newLatLngZoom(currentLatLng, 7f)
                     googleMap.moveCamera(cameraUpdate)
                 }
             } catch (e: SecurityException) {
-                val cameraUpdate = CameraUpdateFactory.newLatLngZoom(defaultLatLng, 10f)
+                val cameraUpdate = CameraUpdateFactory.newLatLngZoom(defaultLatLng, 7f)
                 googleMap.moveCamera(cameraUpdate)
             }
         }
@@ -206,10 +213,11 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
     private fun setupThisFragment(fragmentact: FragmentActivity) {
 
         topAppBar = fragmentact.findViewById(R.id.topAppBar)
-        topAppBar.menu.clear(); // Rensa den gamla menyn
-        topAppBar.inflateMenu(R.menu.top_app_bar_map); // Lägg till den nya menyn
+        topAppBar.menu.clear(); // Clear old menu
+        topAppBar.inflateMenu(R.menu.top_app_bar_map); // add new menu
+        topAppBar.title = "Map"
         addItemButton = fragmentact.findViewById(R.id.addItemButton)
-        addItemButton.hide()
+       // addItemButton.hide()
         topAppBar.navigationIcon = null
     }
 
@@ -227,10 +235,20 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
                     }
 
                     R.id.current -> {
+                        moveCameraToCurrentLocation()
                         true
                     }
 
                     R.id.help -> {
+
+                        MaterialAlertDialogBuilder(requireContext())
+                            .setTitle("Map View")
+                            .setMessage("Browse the map, click on a marker to get more information of the location. At this time all users places are showed as a default setting.\n \n" +
+                                    "If you get lost, hit the GPS icon to center map on your current location.")
+                            .setNeutralButton("OK") { dialog, which ->
+                                // Respond to neutral button press
+                            }
+                            .show()
                         true
                     }
 
@@ -241,7 +259,7 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
     }
 
     override fun onLinkClicked(documentId: String) {
-        // Navigera till ShowLocation med documentId
+        //Navigate to ShowLocation with documentId
         parentFragmentManager.beginTransaction()
             .replace(R.id.container, ShowLocationFragment.newInstance(documentId))
             .commit()

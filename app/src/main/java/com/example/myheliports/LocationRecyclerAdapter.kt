@@ -1,7 +1,6 @@
 package com.example.myheliports
 
 import android.content.Context
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,10 +8,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import java.sql.Timestamp
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class LocationRecyclerAdapter(private val context: Context, private val locationList: List<Location>) :
     RecyclerView.Adapter<LocationRecyclerAdapter.ViewHolder>() {

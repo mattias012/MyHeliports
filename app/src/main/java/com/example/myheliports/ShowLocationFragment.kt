@@ -1,5 +1,7 @@
 package com.example.myheliports
 
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -8,6 +10,9 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.RatingBar
@@ -16,16 +21,22 @@ import androidx.activity.OnBackPressedCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.divider.MaterialDivider
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 class ShowLocationFragment : Fragment() {
@@ -42,13 +53,25 @@ class ShowLocationFragment : Fragment() {
     private lateinit var progressBar: ProgressBar
     private lateinit var materialDivider: MaterialDivider
 
+
+    private lateinit var materialDividerComments2: MaterialDivider
+    private lateinit var commentTextView: TextView
+    private lateinit var recyclerViewComments: RecyclerView
+    private lateinit var commentWrapText: TextInputLayout
+    private lateinit var commentThis: TextInputEditText
+    private lateinit var commentButton: Button
+
+    private var commentList: MutableList<Comment> = mutableListOf()
+
     private var lat: Double? = null
     private var long: Double? = null
     private var imageLink: String? = null
     private var titleLocationToShare: String? = null
 
     private lateinit var db: FirebaseFirestore
+    private lateinit var auth: FirebaseAuth
 
+    private lateinit var viewsToFade: List<View>
 
     companion object {
         fun newInstance(documentId: String): ShowLocationFragment {
@@ -61,6 +84,7 @@ class ShowLocationFragment : Fragment() {
             return fragment
         }
     }
+
     override fun onCreateView(
 
         inflater: LayoutInflater,
@@ -76,6 +100,7 @@ class ShowLocationFragment : Fragment() {
         //Get data from the store
         val documentId = arguments?.getString("documentId")
         db = Firebase.firestore
+        auth = Firebase.auth
 
         //Initialize all the views
         initializeViews(view)
@@ -87,19 +112,46 @@ class ShowLocationFragment : Fragment() {
             Handler(Looper.getMainLooper()).postDelayed({
                 getLocationData(documentId)
                 //Stop progressbar and show ratingbar and materialdivders
-                ratingBarLocation.visibility = View.VISIBLE
-                materialDivider.visibility = View.VISIBLE
+                showHiddenViews()
+                showComments(documentId)
+
                 progressBar.visibility = View.GONE
             }, 500)
 
             //Setup or menu
             topBarAndMenuSetup()
+            //New layoutmanager with number of columns
+            recyclerViewComments.layoutManager = LinearLayoutManager(requireContext())
+            commentButton.setOnClickListener {
+                addComment(documentId)
+                fadeViews(viewsToFade, true)
+                hideKeyboard()
+            }
+            commentThis.setOnEditorActionListener { _, actionId, _ ->
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    hideKeyboard()
+                    addComment(documentId)
+                    fadeViews(viewsToFade, true)
+                    true
+                } else {
+                    false
+                }
+            }
 
         }
 
         return view
     }
-
+    private fun showHiddenViews(){
+        ratingBarLocation.visibility = View.VISIBLE
+        materialDivider.visibility = View.VISIBLE
+        materialDividerComments2.visibility = View.VISIBLE
+        commentTextView.visibility = View.VISIBLE
+        recyclerViewComments.visibility = View.VISIBLE
+        commentWrapText.visibility = View.VISIBLE
+        commentThis.visibility = View.VISIBLE
+        commentButton.visibility = View.VISIBLE
+    }
     private fun topBarAndMenuSetup() {
         //Setup topbar etc
         activity?.let {
@@ -157,6 +209,74 @@ class ShowLocationFragment : Fragment() {
         }
 
         return titleOfLocationIs
+
+    }
+    fun Fragment.hideKeyboard() {
+        val inputMethodManager = activity?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+        val currentFocusedView = activity?.currentFocus
+        currentFocusedView?.let {
+            inputMethodManager?.hideSoftInputFromWindow(it.windowToken, InputMethodManager.HIDE_NOT_ALWAYS)
+        }
+    }
+    private fun addComment(locationId: String) {
+        val user = auth.currentUser
+
+        val commentThisString = commentThis.text.toString()
+
+        progressBar.visibility = View.VISIBLE
+
+        commentButton.isEnabled = false
+        commentThis.isEnabled = false
+        commentThis.setText("")
+
+        if (user == null) {
+            // Visa ett felmeddelande eller på annat sätt hantera situationen
+            Log.w("!!!", "User not signed in")
+        } else {
+            //Create Comment Object
+            val comment = Comment(
+                userId = user.uid,
+                comment = commentThisString,
+                locationId = locationId
+            )
+            Log.d("!!!", "adding comment")
+            db.collection("comments").add(comment)
+                .addOnSuccessListener { documentReference ->
+                    Log.d("!!!", "DocumentSnapshot added with ID: ${documentReference.id}")
+
+                    progressBar.visibility = View.GONE
+                    showComments(locationId)
+                    recyclerViewComments.adapter?.notifyDataSetChanged()
+                    fadeViews(viewsToFade, false)
+                    commentButton.isEnabled = true
+                    commentThis.isEnabled = true
+                }
+                .addOnFailureListener { e ->
+                    Log.w("!!!", "Error adding document", e)
+//                    fadeViews(viewsToFade, false)
+//                    saveLocationButton.isEnabled = true
+                }
+
+        }
+    }
+
+    private fun showComments(locationId: String) {
+
+        commentList.clear()
+        db.collection("comments").whereEqualTo("locationId", locationId).orderBy("timestamp", Query.Direction.DESCENDING).get()
+            .addOnSuccessListener { documents ->
+                for (document in documents) {
+                    val comment = document.toObject(Comment::class.java)
+                    commentList.add(comment)
+                }
+                //Set to adapater
+                val adapter = CommentRecyclerAdapter(requireContext(), commentList)
+                recyclerViewComments.adapter = adapter
+            }
+            .addOnFailureListener { exception ->
+                Log.d("!!!", "GET failed with ", exception)
+            }
+
 
     }
 
@@ -276,10 +396,13 @@ class ShowLocationFragment : Fragment() {
         when (SharedData.fragment) {
             is MapsFragment -> {
                 (activity as StartActivity).showFragment(R.id.container, MapsFragment(), false)
+                addItemButton.show()
             }
+
             is ListLocationFragment -> {
                 (activity as StartActivity).goBack()
             }
+
             else -> {
                 (activity as StartActivity).goBack()
             }
@@ -298,6 +421,17 @@ class ShowLocationFragment : Fragment() {
             ContextCompat.getDrawable(requireContext(), R.drawable.baseline_arrow_back_ios_24)
     }
 
+    private fun fadeViews(views: List<View>, fadeOut: Boolean) {
+        val alphaValue = if (fadeOut) 0.5f else 1f
+
+        views.forEach { view ->
+            view.animate()
+                .alpha(alphaValue)
+                .setDuration(2000)
+                .setListener(null)
+        }
+    }
+
     private fun initializeViews(view: View) {
         imageViewLocation = view.findViewById(R.id.imageViewLocation)
         ratingBarLocation = view.findViewById(R.id.ratingBarLocation)
@@ -307,5 +441,16 @@ class ShowLocationFragment : Fragment() {
         latlongTextView = view.findViewById(R.id.latlongTextView)
         addedByUser = view.findViewById(R.id.addedByUserTextView)
         materialDivider = view.findViewById(R.id.materialDivider)
+
+
+        materialDividerComments2 = view.findViewById(R.id.materialDividerComments2)
+        commentTextView = view.findViewById(R.id.commentTextView)
+        recyclerViewComments = view.findViewById(R.id.recyclerViewComments)
+        commentWrapText = view.findViewById(R.id.commentWrapTextView)
+        commentThis = view.findViewById(R.id.commentThis)
+        commentButton = view.findViewById(R.id.commentButton)
+
+        viewsToFade = listOf(commentWrapText,commentThis)
+
     }
 }

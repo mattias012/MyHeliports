@@ -1,5 +1,6 @@
 package com.example.myheliports
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -8,7 +9,6 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
@@ -16,9 +16,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.search.SearchBar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
@@ -26,9 +24,9 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import kotlin.math.log
 
 class ListLocationFragment : Fragment() {
 
@@ -44,12 +42,17 @@ class ListLocationFragment : Fragment() {
     //standard setting is grid view
     var columnsInGrid = 2
     var position = 0
+    var getAll = true
+
+    private var safeContext: Context? = null
     override fun onCreateView(
 
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+
+        safeContext = context
 
         db = Firebase.firestore
         auth = Firebase.auth
@@ -59,7 +62,13 @@ class ListLocationFragment : Fragment() {
 
         val view = inflater.inflate(R.layout.fragment_listlocation, container, false)
         recyclerView = view.findViewById(R.id.listOfLocationsView)
-        recyclerView.layoutManager = GridLayoutManager(requireContext(), columnsInGrid)
+
+        val context = context
+        if (context != null) {
+            recyclerView.layoutManager = GridLayoutManager(context, columnsInGrid)
+//            recyclerView.layoutManager = GridLayoutManager(safeContext, columnsInGrid)
+        }
+
         progressBar = view.findViewById(R.id.progressBar)
         searchView = view.findViewById(R.id.search)
         searchText = view.findViewById(R.id.searchText)
@@ -71,8 +80,10 @@ class ListLocationFragment : Fragment() {
             topAppBar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.user -> {
-                        val intent = Intent(requireContext(), ProfileActivity::class.java)
-                        startActivity(intent)
+                        if (safeContext != null) {
+                            val intent = Intent(requireContext(), ProfileActivity::class.java)
+                            startActivity(intent)
+                        }
                         true
                     }
 
@@ -85,6 +96,16 @@ class ListLocationFragment : Fragment() {
                         toggleViewMode(1)
                         true
                     }
+                    R.id.person -> {
+
+                        getAllData(columnsInGrid, false)
+                        true
+                    }
+                    R.id.group -> {
+
+                        getAllData(columnsInGrid, true)
+                        true
+                    }
 
                     else -> false
                 }
@@ -93,38 +114,53 @@ class ListLocationFragment : Fragment() {
         setupTextWatcher(searchText)
 
         //Add a short delay, otherwise it goes too fast if we have few places...
-        Handler(Looper.getMainLooper()).postDelayed({
+//        Handler(Looper.getMainLooper()).postDelayed({
 
-            searchDataBase("")
+            searchDataBase("", getAll)
 
             //Set to adapter
-            val adapter = LocationRecyclerAdapter(requireContext(), locationList)
-            // Scroll to THIS result
-            position = SharedData.position
+            if (safeContext != null) {
+                val adapter = LocationRecyclerAdapter(requireContext(), locationList)
+                // Scroll to THIS result
+                position = SharedData.position
 
-            recyclerView.adapter = adapter
-            recyclerView.smoothScrollToPosition(position)
-
-        }, 500)
+                recyclerView.adapter = adapter
+                recyclerView.smoothScrollToPosition(position)
+            }
+//        }, 500)
 
         return view
     }
 
+    private fun getAllData(numberOfColumns: Int, allData: Boolean){
+        if (safeContext != null) {
+            getAll = allData
+            searchDataBase("", allData)
+            recyclerView.layoutManager = GridLayoutManager(requireContext(), numberOfColumns)
+
+            //Update adapter
+            recyclerView.adapter?.notifyDataSetChanged()
+
+            columnsInGrid = numberOfColumns
+        }
+    }
     private fun toggleViewMode(columns: Int) {
 
         //New layoutmanager with number of columns
-        recyclerView.layoutManager = GridLayoutManager(requireContext(), columns)
+        //
+        if (safeContext != null) {
+            recyclerView.layoutManager = GridLayoutManager(requireContext(), columns)
 
-        //Update adapter
-        recyclerView.adapter?.notifyDataSetChanged()
+            //Update adapter
+            recyclerView.adapter?.notifyDataSetChanged()
 
-        columnsInGrid = columns
+            columnsInGrid = columns
+        }
     }
 
     override fun onPause() {
         super.onPause()
 
-        // Nollställ positionen när du lämnar ListLocationsFragment
 //        SharedData.position = 0
     }
 
@@ -150,7 +186,7 @@ class ListLocationFragment : Fragment() {
 
         val textWatcher = object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
-                searchDataBase(searchText.text.toString())
+                searchDataBase(searchText.text.toString(), getAll)
             }
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -158,7 +194,7 @@ class ListLocationFragment : Fragment() {
             }
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                searchDataBase(searchText.text.toString())
+                searchDataBase(searchText.text.toString(), getAll)
             }
         }
         editText.addTextChangedListener(textWatcher)
@@ -166,20 +202,25 @@ class ListLocationFragment : Fragment() {
 
     private fun handleError(error: Exception?) {
         Log.w("!!!", "Error getting documents.", error)
-        Toast.makeText(
-            requireContext(),
-            "Failed to load locations",
-            Toast.LENGTH_SHORT
-        ).show()
+
+        if (safeContext != null) {
+            Toast.makeText(
+                requireContext(),
+                "Failed to load locations",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
         progressBar.visibility = View.GONE  // Stoppa ProgressBar om det finns ett fel
     }
 
     private fun updateLocations(snapshots: List<DocumentSnapshot>?) {
         locationList.clear()
-        for (document in snapshots!!) {
-            val location = document.toObject(Location::class.java)
-            if (location != null) {
-                locationList.add(location)
+        if (snapshots != null) {
+            for (document in snapshots) {
+                val location = document.toObject(Location::class.java)
+                if (location != null) {
+                    locationList.add(location)
+                }
             }
         }
         //Update adapter with changes
@@ -189,14 +230,42 @@ class ListLocationFragment : Fragment() {
         progressBar.visibility = View.GONE
     }
 
-    private fun searchDataBase(searchThisString: String?) {
+    private fun searchDataBase(searchThisString: String?, getAll: Boolean) {
         progressBar.visibility = View.VISIBLE
+
+        Log.d("!!!", "searching for this name")
         val query = if (searchThisString.isNullOrEmpty()) {
-            db.collection("locations").orderBy("timestamp", Query.Direction.DESCENDING)
+
+            if(getAll) {
+                db.collection("locations").orderBy("timestamp", Query.Direction.DESCENDING)
+            }
+            else {
+                val user =  auth.currentUser
+                if (user != null) {
+                    db.collection("locations").whereEqualTo("userId", user.uid)
+                        .orderBy("timestamp", Query.Direction.DESCENDING)
+                }
+                else {
+                    db.collection("locations").orderBy("timestamp", Query.Direction.DESCENDING)
+                }
+            }
         } else {
             //Query firestore after ish-wildcard
-            db.collection("locations").orderBy("name").startAt(searchThisString)
-                .endAt(searchThisString + "\uf8ff")
+            if (getAll) {
+                db.collection("locations").orderBy("name").startAt(searchThisString)
+                    .endAt(searchThisString + "\uf8ff")
+            } else {
+                val user =  auth.currentUser
+                if (user !=null) {
+                    db.collection("locations").whereEqualTo("userId", user.uid).orderBy("name")
+                        .startAt(searchThisString)
+                        .endAt(searchThisString + "\uf8ff")
+                }
+                else {
+                    db.collection("locations").orderBy("name").startAt(searchThisString)
+                        .endAt(searchThisString + "\uf8ff")
+                }
+            }
 
         }
 

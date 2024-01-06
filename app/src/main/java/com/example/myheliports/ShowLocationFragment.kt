@@ -92,6 +92,8 @@ class ShowLocationFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
 
+        SharedData.fragment = ShowLocationFragment()
+
         val view = inflater.inflate(R.layout.fragment_showlocation, container, false)
 
         progressBar = view.findViewById(R.id.progressBar)
@@ -119,7 +121,7 @@ class ShowLocationFragment : Fragment() {
             }, 500)
 
             //Setup or menu
-            topBarAndMenuSetup()
+            topBarAndMenuSetup(documentId)
             //New layoutmanager with number of columns
             recyclerViewComments.layoutManager = LinearLayoutManager(requireContext())
             commentButton.setOnClickListener {
@@ -142,7 +144,8 @@ class ShowLocationFragment : Fragment() {
 
         return view
     }
-    private fun showHiddenViews(){
+
+    private fun showHiddenViews() {
         ratingBarLocation.visibility = View.VISIBLE
         materialDivider.visibility = View.VISIBLE
         materialDividerComments2.visibility = View.VISIBLE
@@ -152,7 +155,8 @@ class ShowLocationFragment : Fragment() {
         commentThis.visibility = View.VISIBLE
         commentButton.visibility = View.VISIBLE
     }
-    private fun topBarAndMenuSetup() {
+
+    private fun topBarAndMenuSetup(documentId: String) {
         //Setup topbar etc
         activity?.let {
             setupThisFragment(it)
@@ -166,6 +170,11 @@ class ShowLocationFragment : Fragment() {
                     R.id.user -> {
                         val intent = Intent(requireContext(), ProfileActivity::class.java)
                         startActivity(intent)
+                        true
+                    }
+
+                    R.id.showmap -> {
+                        (requireContext() as StartActivity).showMapsFragment(documentId)
                         true
                     }
 
@@ -211,13 +220,19 @@ class ShowLocationFragment : Fragment() {
         return titleOfLocationIs
 
     }
+
     fun Fragment.hideKeyboard() {
-        val inputMethodManager = activity?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+        val inputMethodManager =
+            activity?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
         val currentFocusedView = activity?.currentFocus
         currentFocusedView?.let {
-            inputMethodManager?.hideSoftInputFromWindow(it.windowToken, InputMethodManager.HIDE_NOT_ALWAYS)
+            inputMethodManager?.hideSoftInputFromWindow(
+                it.windowToken,
+                InputMethodManager.HIDE_NOT_ALWAYS
+            )
         }
     }
+
     private fun addComment(locationId: String) {
         val user = auth.currentUser
 
@@ -252,9 +267,9 @@ class ShowLocationFragment : Fragment() {
                     commentThis.isEnabled = true
                 }
                 .addOnFailureListener { e ->
-                    Log.w("!!!", "Error adding document", e)
-//                    fadeViews(viewsToFade, false)
-//                    saveLocationButton.isEnabled = true
+                    Log.w("!!!", "Error adding comment", e)
+                    fadeViews(viewsToFade, false)
+                    commentButton.isEnabled = true
                 }
 
         }
@@ -263,7 +278,8 @@ class ShowLocationFragment : Fragment() {
     private fun showComments(locationId: String) {
 
         commentList.clear()
-        db.collection("comments").whereEqualTo("locationId", locationId).orderBy("timestamp", Query.Direction.DESCENDING).get()
+        db.collection("comments").whereEqualTo("locationId", locationId)
+            .orderBy("timestamp", Query.Direction.DESCENDING).get()
             .addOnSuccessListener { documents ->
                 for (document in documents) {
                     val comment = document.toObject(Comment::class.java)
@@ -393,21 +409,20 @@ class ShowLocationFragment : Fragment() {
     }
 
     private fun goBackStuff() {
-        when (SharedData.fragment) {
+        Log.d("!!!", "${SharedData.prevFragment}")
+        when (SharedData.prevFragment) {
             is MapsFragment -> {
-                (activity as StartActivity).showFragment(R.id.container, MapsFragment(), false)
-                addItemButton.show()
+                (activity as StartActivity).goBack(R.id.item_2, SharedData.prevFragment)
             }
-
             is ListLocationFragment -> {
-                (activity as StartActivity).goBack()
+                (activity as StartActivity).goBack(R.id.item_1, SharedData.prevFragment)
             }
-
             else -> {
-                (activity as StartActivity).goBack()
+                (activity as StartActivity).goBack(R.id.item_1, SharedData.prevFragment)
             }
         }
-        SharedData.fragment = null
+        addItemButton.show()
+
     }
 
     private fun setupThisFragment(fragmentact: FragmentActivity) {
@@ -450,7 +465,7 @@ class ShowLocationFragment : Fragment() {
         commentThis = view.findViewById(R.id.commentThis)
         commentButton = view.findViewById(R.id.commentButton)
 
-        viewsToFade = listOf(commentWrapText,commentThis)
+        viewsToFade = listOf(commentWrapText, commentThis)
 
     }
 }

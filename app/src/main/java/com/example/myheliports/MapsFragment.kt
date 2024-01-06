@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
@@ -29,6 +30,7 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.navigation.NavigationBarView
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -93,6 +95,7 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
 
         val documentId = arguments?.getString("documentId")
 
+
         if (documentId != null){
             moveCameraToLocation(documentId)
         }
@@ -113,11 +116,13 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
 
         //Remember where user comes from
         SharedData.fragment = this
+        SharedData.prevFragment = this
 
         val view = inflater.inflate(R.layout.fragment_maps, container, false)
 
         //Setup menu
         topBarAndMenuSetup()
+        bottomMenu(R.id.item_2, view)
 
         return view
     }
@@ -153,6 +158,8 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
                 .addOnFailureListener { exception ->
                     Log.d("!!!", "GET failed with ", exception)
                 }
+
+            SharedData.prevFragment = this
         }
     }
 
@@ -292,8 +299,64 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
                 }
             }
         }
+        //Override androids backbutton
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    goBackStuff()
+                }
+            })
     }
+    private fun goBackStuff() {
 
+        (activity as StartActivity).goBack(null, null)
+        addItemButton.show()
+
+    }
+    private fun bottomMenu(itemSelected: Int?, view: View){
+
+        val bottomNavigation = view?.findViewById<NavigationBarView>(R.id.bottom_navigation)
+
+        if(itemSelected != null){
+            bottomNavigation?.selectedItemId = itemSelected
+        }
+
+        bottomNavigation?.setOnItemSelectedListener { item ->
+            when (itemSelected) {
+                R.id.item_1 -> {
+                    true
+                }
+
+                R.id.item_2 -> {
+                    true
+                }
+
+                R.id.item_3 -> {
+                    // Respond to navigation item 2 click
+                    true
+                }
+
+                else -> false
+            }
+        }
+
+        bottomNavigation?.setOnItemReselectedListener { item ->
+            when (item.itemId) {
+                R.id.item_1 -> {
+                    // Respond to navigation item 1 reselection
+                }
+
+                R.id.item_2 -> {
+                    // Respond to navigation item 2 reselection
+                }
+
+                R.id.item_3 -> {
+                    // Respond to navigation item 2 click
+                }
+            }
+        }
+    }
     override fun onLinkClicked(documentId: String) {
         //Navigate to ShowLocation with documentId
         parentFragmentManager.beginTransaction()

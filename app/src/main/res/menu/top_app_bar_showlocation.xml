@@ -10,6 +10,14 @@
 <!--        />-->
 
     <item
+        android:id="@+id/showmap"
+        android:icon="@drawable/baseline_map_24"
+        android:title="Show location on map"
+        android:contentDescription="Show location on map"
+        app:showAsAction="ifRoom"
+        />
+
+    <item
         android:id="@+id/edit"
         android:icon="@drawable/baseline_edit_note_24"
         android:title="Edit Location"
@@ -29,7 +37,7 @@
     <item
         android:id="@+id/user"
         android:contentDescription="User profile"
-        app:showAsAction="ifRoom"
+        app:showAsAction="never"
         android:title="Profile"
         android:icon="@drawable/baseline_person_pin_24"
       />

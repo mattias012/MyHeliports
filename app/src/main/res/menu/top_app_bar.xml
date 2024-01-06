@@ -12,7 +12,7 @@
     <item
         android:id="@+id/person"
         android:icon="@drawable/baseline_person_24"
-        android:title="Your places"
+        android:title="My Heliports"
         android:contentDescription="List your places only"
         app:showAsAction="never"
         />

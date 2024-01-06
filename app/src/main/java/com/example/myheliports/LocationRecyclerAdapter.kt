@@ -3,6 +3,7 @@ package com.example.myheliports
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -37,6 +38,7 @@ class LocationRecyclerAdapter(private val context: Context, private val location
         holder.itemView.setOnClickListener {
             val documentId = it.tag as String
             //Remember last position in list
+            Log.d("!!!", "onBindViewHolder position: $position")
             SharedData.position = position
             (it.context as StartActivity).showLocationFragment(documentId)
         }

@@ -15,6 +15,7 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.textfield.TextInputEditText
@@ -114,8 +115,6 @@ class ListLocationFragment : Fragment() {
         }
         setupTextWatcher(searchText)
 
-        //Add a short delay, otherwise it goes too fast if we have few places...
-//        Handler(Looper.getMainLooper()).postDelayed({
 
             searchDataBase("", getAll)
 
@@ -127,13 +126,10 @@ class ListLocationFragment : Fragment() {
                         (activity as? StartActivity)?.showMapsFragment(documentId)
                     }
                 })
-                // Scroll to THIS result
-                position = SharedData.position
 
                 recyclerView.adapter = adapter
-                recyclerView.smoothScrollToPosition(position)
+                recyclerView.smoothScrollToPosition(SharedData.position)
             }
-//        }, 500)
 
         return view
     }
@@ -167,25 +163,30 @@ class ListLocationFragment : Fragment() {
     override fun onPause() {
         super.onPause()
 
-//        SharedData.position = 0
+        val gridLayoutManager = (recyclerView.layoutManager as GridLayoutManager)
+        gridLayoutManager.scrollToPositionWithOffset(SharedData.position, 0)
     }
 
     override fun onStart() {
         super.onStart()
+//        recyclerView.smoothScrollToPosition(SharedData.position)
+        val gridLayoutManager = (recyclerView.layoutManager as GridLayoutManager)
+        gridLayoutManager.scrollToPositionWithOffset(SharedData.position, 0)
 
-        // Scroll to SharedData.position
-        recyclerView.smoothScrollToPosition(SharedData.position)
     }
 
     override fun onResume() {
         super.onResume()
         //Start progresBar
-        progressBar.visibility = View.VISIBLE
+//        progressBar.visibility = View.VISIBLE
 
         searchText.setText("")
 
-        // Scroll to SharedData.position
-        recyclerView.smoothScrollToPosition(SharedData.position)
+        Log.d("!!!", "onResume position: ${SharedData.position}")
+        //Scroll to SharedData.position
+//        recyclerView.smoothScrollToPosition(SharedData.position)
+        val gridLayoutManager = (recyclerView.layoutManager as GridLayoutManager)
+        gridLayoutManager.scrollToPositionWithOffset(SharedData.position, 0)
     }
 
     private fun setupTextWatcher(editText: TextInputEditText) {

@@ -1,0 +1,52 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+<!--    <item-->
+<!--        android:id="@+id/back"-->
+<!--        android:icon="@drawable/baseline_arrow_back_ios_24"-->
+<!--        android:title="Back"-->
+<!--        android:contentDescription="Close this window"-->
+<!--        app:showAsAction="ifRoom"-->
+<!--        />-->
+
+    <item
+        android:id="@+id/person"
+        android:icon="@drawable/baseline_person_24"
+        android:title="My friends"
+        android:contentDescription="List your places only"
+        app:showAsAction="never"
+        />
+    <item
+        android:id="@+id/group"
+        android:icon="@drawable/baseline_groups_24"
+        android:title="All users"
+        android:contentDescription="All places view"
+        app:showAsAction="never"
+        />
+    <item
+        android:id="@+id/list"
+        android:icon="@drawable/baseline_format_list_bulleted_24"
+        android:title="List View"
+        android:contentDescription="List view"
+        app:showAsAction="ifRoom"
+        />
+
+    <item
+        android:id="@+id/grid"
+        android:icon="@drawable/baseline_grid_view_24"
+        android:title="Grid View"
+        android:contentDescription="Grid view"
+        app:showAsAction="ifRoom"
+        />
+
+
+
+    <item
+        android:id="@+id/user"
+        android:contentDescription="User profile"
+        app:showAsAction="never"
+        android:title="Profile"
+        android:icon="@drawable/baseline_person_pin_24"
+      />
+
+</menu>

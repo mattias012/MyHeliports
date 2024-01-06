@@ -11,10 +11,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
@@ -25,19 +28,22 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
-class ListLocationFragment : Fragment() {
+class ListUserFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
-    private var locationList: MutableList<Location> = mutableListOf()
+    private var userList: MutableList<User> = mutableListOf()
     private lateinit var progressBar: ProgressBar
     private lateinit var searchView: TextInputLayout
     private lateinit var searchText: TextInputEditText
+
+    private lateinit var topAppBar: MaterialToolbar
+    private lateinit var addItemButton: FloatingActionButton
 
     private lateinit var db: FirebaseFirestore
     private lateinit var auth: FirebaseAuth
 
     //standard setting is grid view
-    var columnsInGrid = 2
+    var columnsInGrid = 3
     var position = 0
     var getAll = true
 
@@ -59,21 +65,22 @@ class ListLocationFragment : Fragment() {
         SharedData.fragment = this
         SharedData.prevFragment = this
 
-        val view = inflater.inflate(R.layout.fragment_listlocation, container, false)
-        recyclerView = view.findViewById(R.id.listOfLocationView)
+        val view = inflater.inflate(R.layout.fragment_listuser, container, false)
+        recyclerView = view.findViewById(R.id.listOfUserView)
 
         val context = context
         if (context != null) {
             recyclerView.layoutManager = GridLayoutManager(context, columnsInGrid)
-//            recyclerView.layoutManager = GridLayoutManager(safeContext, columnsInGrid)
         }
 
-        progressBar = view.findViewById(R.id.progressBar)
-        searchView = view.findViewById(R.id.search)
-        searchText = view.findViewById(R.id.searchText)
+        progressBar = view.findViewById(R.id.progressBarUser)
+        searchView = view.findViewById(R.id.searchUser)
+        searchText = view.findViewById(R.id.searchTextUser)
 
         activity?.let {
-            val topAppBar = it.findViewById<MaterialToolbar>(R.id.topAppBar)
+
+            setupThisFragment(it)
+
             topAppBar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.user -> {
@@ -85,7 +92,7 @@ class ListLocationFragment : Fragment() {
                     }
 
                     R.id.grid -> {
-                        toggleViewMode(2)
+                        toggleViewMode(3)
                         true
                     }
 
@@ -111,20 +118,15 @@ class ListLocationFragment : Fragment() {
         setupTextWatcher(searchText)
 
 
-            searchDataBase("", getAll)
+        searchDataBase("", getAll)
 
-            //Set to adapter
-            if (safeContext != null) {
-                val adapter = LocationRecyclerAdapter(requireContext(), locationList, object :
-                    LocationRecyclerAdapter.OnMapClickListener {
-                    override fun onMapClick(documentId: String) {
-                        (activity as? StartActivity)?.showMapsFragment(documentId)
-                    }
-                })
+        //Set to adapter
+        if (safeContext != null) {
+            val adapter = UserRecyclerAdapter(requireContext(), userList)
 
-                recyclerView.adapter = adapter
-                recyclerView.smoothScrollToPosition(SharedData.position)
-            }
+            recyclerView.adapter = adapter
+            recyclerView.smoothScrollToPosition(SharedData.position)
+        }
 
         return view
     }
@@ -208,20 +210,20 @@ class ListLocationFragment : Fragment() {
         if (safeContext != null) {
             Toast.makeText(
                 requireContext(),
-                "Failed to load locations",
+                "Failed to load users",
                 Toast.LENGTH_SHORT
             ).show()
         }
         progressBar.visibility = View.GONE  // Stoppa ProgressBar om det finns ett fel
     }
 
-    private fun updateLocations(snapshots: List<DocumentSnapshot>?) {
-        locationList.clear()
+    private fun updateUsers(snapshots: List<DocumentSnapshot>?) {
+        userList.clear()
         if (snapshots != null) {
             for (document in snapshots) {
-                val location = document.toObject(Location::class.java)
-                if (location != null) {
-                    locationList.add(location)
+                val user = document.toObject(User::class.java)
+                if (user != null) {
+                    userList.add(user)
                 }
             }
         }
@@ -239,32 +241,32 @@ class ListLocationFragment : Fragment() {
         val query = if (searchThisString.isNullOrEmpty()) {
 
             if(getAll) {
-                db.collection("locations").orderBy("timestamp", Query.Direction.DESCENDING)
+                db.collection("users").orderBy("timestamp", Query.Direction.DESCENDING)
             }
             else {
                 val user =  auth.currentUser
                 if (user != null) {
-                    db.collection("locations").whereEqualTo("userId", user.uid)
+                    db.collection("users").whereEqualTo("userId", user.uid)
                         .orderBy("timestamp", Query.Direction.DESCENDING)
                 }
                 else {
-                    db.collection("locations").orderBy("timestamp", Query.Direction.DESCENDING)
+                    db.collection("users").orderBy("timestamp", Query.Direction.DESCENDING)
                 }
             }
         } else {
             //Query firestore after ish-wildcard
             if (getAll) {
-                db.collection("locations").orderBy("name").startAt(searchThisString)
+                db.collection("users").orderBy("name").startAt(searchThisString)
                     .endAt(searchThisString + "\uf8ff")
             } else {
                 val user =  auth.currentUser
                 if (user !=null) {
-                    db.collection("locations").whereEqualTo("userId", user.uid).orderBy("name")
+                    db.collection("users").whereEqualTo("userId", user.uid).orderBy("name")
                         .startAt(searchThisString)
                         .endAt(searchThisString + "\uf8ff")
                 }
                 else {
-                    db.collection("locations").orderBy("name").startAt(searchThisString)
+                    db.collection("users").orderBy("userName").startAt(searchThisString)
                         .endAt(searchThisString + "\uf8ff")
                 }
             }
@@ -277,7 +279,17 @@ class ListLocationFragment : Fragment() {
                 return@addSnapshotListener
             }
 
-            updateLocations(snapshots?.documents)
+            updateUsers(snapshots?.documents)
         }
+    }
+    private fun setupThisFragment(fragmentact: FragmentActivity) {
+
+        topAppBar = fragmentact.findViewById(R.id.topAppBar)
+        topAppBar.menu.clear(); // Rensa den gamla menyn
+        topAppBar.inflateMenu(R.menu.top_app_bar_users); // Lägg till den nya menyn
+        addItemButton = fragmentact.findViewById(R.id.addItemButton)
+        addItemButton.hide()
+        topAppBar.navigationIcon = null
+        topAppBar.title = "Users"
     }
 }

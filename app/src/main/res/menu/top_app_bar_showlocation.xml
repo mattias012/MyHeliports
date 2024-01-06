@@ -22,7 +22,7 @@
         android:icon="@drawable/baseline_edit_note_24"
         android:title="Edit Location"
         android:contentDescription="Edit Location"
-        app:showAsAction="ifRoom"
+        app:showAsAction="never"
         />
 
 

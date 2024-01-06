@@ -6,7 +6,7 @@
     android:layout_height="match_parent">
 
     <com.google.android.material.progressindicator.CircularProgressIndicator
-        android:id="@+id/progressBar"
+        android:id="@+id/progressBarUser"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:indeterminate="true"
@@ -16,14 +16,14 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/search"
+        android:id="@+id/searchUser"
 
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
-        android:hint="Search landing spot"
+        android:hint="Search user"
         app:endIconMode="clear_text"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -31,21 +31,23 @@
         app:startIconDrawable="@drawable/baseline_search_24">
 
     <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/searchText"
+            android:id="@+id/searchTextUser"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/listOfLocationView"
+        android:id="@+id/listOfUserView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/search"
-        tools:listitem="@layout/item_listlocation" />
+        app:layout_constraintTop_toBottomOf="@id/searchUser"
+        app:layout_constraintVertical_bias="0.0"
+        tools:listitem="@layout/item_listluser" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

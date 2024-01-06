@@ -81,7 +81,7 @@ class StartActivity : AppCompatActivity() {
         transaction.replace(R.id.container, fragment, "MapsFragment")
         transaction.addToBackStack(null) // Lägg till transactionen till back stack så att användaren kan navigera tillbaka
         transaction.commit()
-        val bottomNavigation = findViewById<NavigationBarView>(R.id.bottom_navigation)
+
     }
 
     fun getActiveFragment(): Fragment? {
@@ -114,10 +114,6 @@ class StartActivity : AppCompatActivity() {
         else {
             supportFragmentManager.popBackStack()
         }
-//        supportFragmentManager.popBackStack()
-
-
-
     }
     private fun bottomMenu(){
         val bottomNavigation = findViewById<NavigationBarView>(R.id.bottom_navigation)
@@ -137,7 +133,7 @@ class StartActivity : AppCompatActivity() {
                 }
 
                 R.id.item_3 -> {
-                    // Respond to navigation item 2 click
+                    showFragment(R.id.container, ListUserFragment(), false)
                     true
                 }
 

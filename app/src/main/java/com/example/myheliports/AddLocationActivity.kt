@@ -38,7 +38,6 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.Timestamp
-import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import java.util.*
 
@@ -538,7 +537,7 @@ class AddLocationActivity : AppCompatActivity() {
 
         saveLocationButton = findViewById(R.id.saveLocationButton)
 
-        imageView = findViewById(R.id.imageView)
+        imageView = findViewById(R.id.imageViewUser)
 
         viewsToFade = listOf(
             nameOfLocationView,

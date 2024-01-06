@@ -69,7 +69,6 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
                     val marker = googleMap.addMarker(MarkerOptions().position(markerLatLng).title(locationName))
                     marker?.tag = location
                 }
-
             }
 
             val safeContext = context
@@ -94,7 +93,6 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
         }
 
         val documentId = arguments?.getString("documentId")
-
 
         if (documentId != null){
             moveCameraToLocation(documentId)
@@ -320,41 +318,6 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
 
         if(itemSelected != null){
             bottomNavigation?.selectedItemId = itemSelected
-        }
-
-        bottomNavigation?.setOnItemSelectedListener { item ->
-            when (itemSelected) {
-                R.id.item_1 -> {
-                    true
-                }
-
-                R.id.item_2 -> {
-                    true
-                }
-
-                R.id.item_3 -> {
-                    // Respond to navigation item 2 click
-                    true
-                }
-
-                else -> false
-            }
-        }
-
-        bottomNavigation?.setOnItemReselectedListener { item ->
-            when (item.itemId) {
-                R.id.item_1 -> {
-                    // Respond to navigation item 1 reselection
-                }
-
-                R.id.item_2 -> {
-                    // Respond to navigation item 2 reselection
-                }
-
-                R.id.item_3 -> {
-                    // Respond to navigation item 2 click
-                }
-            }
         }
     }
     override fun onLinkClicked(documentId: String) {

@@ -163,6 +163,6 @@ class StartActivity : AppCompatActivity() {
         topAppBar.inflateMenu(R.menu.top_app_bar); // Lägg till den nya menyn
         topAppBar.navigationIcon = null
         topAppBar.title = "MyHeliports"
-//        addItemButton.show()
+        addItemButton.show()
     }
 }

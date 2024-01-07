@@ -34,6 +34,8 @@ import android.widget.ProgressBar
 import android.widget.RatingBar
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContentProviderCompat.requireContext
+import com.bumptech.glide.Glide
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -97,6 +99,12 @@ class AddLocationActivity : AppCompatActivity() {
         auth = Firebase.auth
         storage = Firebase.storage
 
+        val documentId = intent.getStringExtra("documentId")
+
+        if (documentId != null){
+            getLocationData(documentId)
+        }
+
         initializeViews()
         requestPermission()
 
@@ -108,7 +116,9 @@ class AddLocationActivity : AppCompatActivity() {
         handleDate()
 
         saveLocationButton.setOnClickListener {
-            saveLocation()
+
+                    saveLocation()
+
         }
 
         val topAppBar = findViewById<MaterialToolbar>(R.id.topAppBar)
@@ -137,6 +147,60 @@ class AddLocationActivity : AppCompatActivity() {
                 else -> false
             }
         }
+    }
+    private fun updateLocationData(documentId: String){
+
+        val docRef = db.collection("locations").document(documentId)
+
+        docRef
+            .update("myField", "newValue")
+            .addOnSuccessListener { Log.d("!!!", "DocumentSnapshot successfully updated!") }
+            .addOnFailureListener { e -> Log.w("!!!", "Error updating document", e) }
+    }
+     private fun getLocationData(documentId: String) {
+            db.collection("locations").document(documentId).get()
+                .addOnSuccessListener { document ->
+                    val location = document.toObject(Location::class.java)
+                    location?.let {
+
+                        //Get and set ratingBar
+                        if (location.rating != null) {
+                            ratingView.rating = location.rating!!.toFloat()
+                            ratingView.isEnabled = true
+                        }
+
+                        //For full view, full name of lcation should be printed
+                        nameOfLocation.setText(location.name)
+                        //Full description
+                        descriptionOfLocation.setText(location.description)
+
+                        //Fix date of photo
+                        if (location.dateOfPhoto != null) {
+                            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                            val dateString = sdf.format((location.dateOfPhoto!!.toDate()))
+                            dateOfPhoto.setText(dateString)
+                        }
+                        //Print Lat/Long
+
+                        latOfLocation.setText(location.lat.toString())
+                        longOfLocation.setText(location.long.toString())
+
+                        //Get and set Image
+                        if (location.imageLink != null) {
+                            Glide.with(this)
+                                .load(location.imageLink)
+                                .into(imageView);
+                        } else {
+                            imageView.setImageResource(R.drawable.default1);
+                        }
+
+                    } ?: run {
+                        Log.d("!!!", "No such document")
+                    }
+                }
+                .addOnFailureListener { exception ->
+                    Log.d("!!!", "GET failed with ", exception)
+                }
     }
 
     private fun handleDate() {
@@ -409,6 +473,7 @@ class AddLocationActivity : AppCompatActivity() {
         }
 
         if (fileLocation == null) {
+
             val defaultImageResId = R.raw.default1
             val inputStream = resources.openRawResource(defaultImageResId)
             val defaultFile = File(this.filesDir, "default1.jpg")
@@ -429,10 +494,10 @@ class AddLocationActivity : AppCompatActivity() {
         val progressBar = findViewById<ProgressBar>(R.id.progressBar)
 
         uploadTask?.addOnProgressListener { taskSnapshot ->
-            // Beräkna uppladdningsprogressen
+            //Calculate progress
             val progress = (100.0 * taskSnapshot.bytesTransferred) / taskSnapshot.totalByteCount
 
-            // Visa ProgressBar och uppdatera framsteg
+            //Show progress
             progressBar.visibility = View.VISIBLE
             fadeViews(viewsToFade, true)
             progressBar.progress = progress.toInt()
@@ -445,7 +510,7 @@ class AddLocationActivity : AppCompatActivity() {
                 val user = auth.currentUser
 
                 if (user == null) {
-                    // Visa ett felmeddelande eller på annat sätt hantera situationen
+                    //Error handling in case user  is null
                     Log.w("!!!", "User not signed in")
                 } else {
                     //Create Location Object

@@ -179,6 +179,9 @@ class ShowLocationFragment : Fragment() {
                     }
 
                     R.id.edit -> {
+                        val intent = Intent(requireContext(), AddLocationActivity::class.java)
+                            intent.putExtra("documentId", documentId)
+                        startActivity(intent)
                         true
                     }
 

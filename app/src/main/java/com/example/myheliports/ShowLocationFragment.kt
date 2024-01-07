@@ -139,9 +139,7 @@ class ShowLocationFragment : Fragment() {
                     false
                 }
             }
-
         }
-
         return view
     }
 

@@ -124,9 +124,7 @@ class AddLocationActivity : AppCompatActivity() {
         handleDate()
 
         saveLocationButton.setOnClickListener {
-
             saveLocation()
-
         }
 
         val topAppBar = findViewById<MaterialToolbar>(R.id.topAppBar)
@@ -193,7 +191,6 @@ class AddLocationActivity : AppCompatActivity() {
                         dateOfPhoto.setText(dateString)
                     }
                     //Print Lat/Long
-
                     latOfLocation.setText(location.lat.toString())
                     longOfLocation.setText(location.long.toString())
 
@@ -320,32 +317,6 @@ class AddLocationActivity : AppCompatActivity() {
         val galleryIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
         startActivityForResult(galleryIntent, REQUEST_GALLERY)
     }
-
-    //    private fun openCamera() {
-//        // Create an intent to capture an image
-//        val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-//        if (cameraIntent.resolveActivity(packageManager) != null) {
-//            // Create the file where the photo should go
-//            photoFile = try {
-//                createImageFile()
-//            } catch (ex: IOException) {
-//                // Error occurred while creating the File
-//                null
-//            }
-//
-//            // Continue only if the File was successfully created
-//            photoFile?.let {
-//
-//                val photoURI: Uri = FileProvider.getUriForFile(
-//                    this,
-//                    "com.example.myheliports.fileprovider",
-//                    it
-//                )
-//                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
-//                startActivityForResult(cameraIntent, REQUEST_CAMERA)
-//            }
-//        }
-//    }
     private fun openCamera() {
 
             val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
@@ -354,39 +325,7 @@ class AddLocationActivity : AppCompatActivity() {
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
                 startActivityForResult(takePictureIntent, REQUEST_CAMERA)
             }
-
     }
-//    private fun createImageFile(): File {
-//
-//        // Create an image file name
-//        val timeStamp: String =
-//            SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-//        val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-//
-//        // Create the file
-//        val imageFile = File.createTempFile(
-//            "JPEG_${timeStamp}_",
-//            ".jpg",
-//            storageDir
-//        )
-//
-//        file = imageFile
-//
-//        // Save a file path for use with ACTION_VIEW intents
-//        currentPhotoPath = imageFile.absolutePath
-//        Log.d("PhotoPath", "Current Photo Path: $currentPhotoPath")
-//
-//        val contentValues = ContentValues().apply {
-//            put(MediaStore.MediaColumns.DATA, imageFile.absolutePath)
-//            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-//            put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis())
-//        }
-//        contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-//
-//
-//        return imageFile
-//    }
-
     private fun createImageFile(): Uri {
 
         val displayName = "myImage_${System.currentTimeMillis()}"

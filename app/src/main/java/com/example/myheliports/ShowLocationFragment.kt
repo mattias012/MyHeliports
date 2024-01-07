@@ -207,7 +207,10 @@ class ShowLocationFragment : Fragment() {
     private fun fixPhotoDate(location: Location) {
         val date = location.dateOfPhoto?.toDate()
         val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val dateString = format.format(date)
+        var dateString = ""
+        if (date != null){
+             dateString = format.format(date)
+        }
 
         dateOfPhotoLocation.text = dateString
     }
@@ -224,7 +227,7 @@ class ShowLocationFragment : Fragment() {
 
     }
 
-    fun Fragment.hideKeyboard() {
+    private fun Fragment.hideKeyboard() {
         val inputMethodManager =
             activity?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
         val currentFocusedView = activity?.currentFocus

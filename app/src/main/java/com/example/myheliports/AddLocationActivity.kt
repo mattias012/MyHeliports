@@ -16,6 +16,8 @@ import com.google.firebase.ktx.Firebase
 import android.Manifest
 import android.content.ContentValues
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.ExifInterface
 import android.provider.MediaStore
 import android.widget.ImageView
@@ -28,19 +30,24 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import android.net.Uri
 import android.os.Environment
+import android.provider.OpenableColumns
 import android.util.Log
 import android.view.View
+import android.webkit.MimeTypeMap
 import android.widget.ProgressBar
 import android.widget.RatingBar
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContentProviderCompat.requireContext
 import com.bumptech.glide.Glide
+import com.google.android.gms.tasks.Task
+import com.google.android.gms.tasks.Tasks
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.Timestamp
 import com.google.firebase.storage.FirebaseStorage
+import java.io.ByteArrayOutputStream
 import java.util.*
 
 
@@ -84,10 +91,11 @@ class AddLocationActivity : AppCompatActivity() {
 
     private lateinit var currentPhotoPath: String
 
-    private var photoFile: File? = null
+    private var photoUri: Uri? = null
     var dateOfPhotoTimestamp: Timestamp? = null
     var file: File? = null  // Definiera file här
     var fileURI: Uri? = null
+    var fileName: String? = null
     var rating: Int? = null
 
 
@@ -101,7 +109,7 @@ class AddLocationActivity : AppCompatActivity() {
 
         val documentId = intent.getStringExtra("documentId")
 
-        if (documentId != null){
+        if (documentId != null) {
             getLocationData(documentId)
         }
 
@@ -117,7 +125,7 @@ class AddLocationActivity : AppCompatActivity() {
 
         saveLocationButton.setOnClickListener {
 
-                    saveLocation()
+            saveLocation()
 
         }
 
@@ -133,6 +141,7 @@ class AddLocationActivity : AppCompatActivity() {
                     startActivity(intent)
                     true
                 }
+
                 R.id.help -> {
 
                     MaterialAlertDialogBuilder(this@AddLocationActivity)
@@ -144,11 +153,13 @@ class AddLocationActivity : AppCompatActivity() {
                         .show()
                     true
                 }
+
                 else -> false
             }
         }
     }
-    private fun updateLocationData(documentId: String){
+
+    private fun updateLocationData(documentId: String) {
 
         val docRef = db.collection("locations").document(documentId)
 
@@ -157,50 +168,51 @@ class AddLocationActivity : AppCompatActivity() {
             .addOnSuccessListener { Log.d("!!!", "DocumentSnapshot successfully updated!") }
             .addOnFailureListener { e -> Log.w("!!!", "Error updating document", e) }
     }
-     private fun getLocationData(documentId: String) {
-            db.collection("locations").document(documentId).get()
-                .addOnSuccessListener { document ->
-                    val location = document.toObject(Location::class.java)
-                    location?.let {
 
-                        //Get and set ratingBar
-                        if (location.rating != null) {
-                            ratingView.rating = location.rating!!.toFloat()
-                            ratingView.isEnabled = true
-                        }
+    private fun getLocationData(documentId: String) {
+        db.collection("locations").document(documentId).get()
+            .addOnSuccessListener { document ->
+                val location = document.toObject(Location::class.java)
+                location?.let {
 
-                        //For full view, full name of lcation should be printed
-                        nameOfLocation.setText(location.name)
-                        //Full description
-                        descriptionOfLocation.setText(location.description)
-
-                        //Fix date of photo
-                        if (location.dateOfPhoto != null) {
-                            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                            val dateString = sdf.format((location.dateOfPhoto!!.toDate()))
-                            dateOfPhoto.setText(dateString)
-                        }
-                        //Print Lat/Long
-
-                        latOfLocation.setText(location.lat.toString())
-                        longOfLocation.setText(location.long.toString())
-
-                        //Get and set Image
-                        if (location.imageLink != null) {
-                            Glide.with(this)
-                                .load(location.imageLink)
-                                .into(imageView);
-                        } else {
-                            imageView.setImageResource(R.drawable.default1);
-                        }
-
-                    } ?: run {
-                        Log.d("!!!", "No such document")
+                    //Get and set ratingBar
+                    if (location.rating != null) {
+                        ratingView.rating = location.rating!!.toFloat()
+                        ratingView.isEnabled = true
                     }
+
+                    //For full view, full name of lcation should be printed
+                    nameOfLocation.setText(location.name)
+                    //Full description
+                    descriptionOfLocation.setText(location.description)
+
+                    //Fix date of photo
+                    if (location.dateOfPhoto != null) {
+                        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                        val dateString = sdf.format((location.dateOfPhoto!!.toDate()))
+                        dateOfPhoto.setText(dateString)
+                    }
+                    //Print Lat/Long
+
+                    latOfLocation.setText(location.lat.toString())
+                    longOfLocation.setText(location.long.toString())
+
+                    //Get and set Image
+                    if (location.imageLink != null) {
+                        Glide.with(this)
+                            .load(location.imageLink)
+                            .into(imageView);
+                    } else {
+                        imageView.setImageResource(R.drawable.default1);
+                    }
+
+                } ?: run {
+                    Log.d("!!!", "No such document")
                 }
-                .addOnFailureListener { exception ->
-                    Log.d("!!!", "GET failed with ", exception)
-                }
+            }
+            .addOnFailureListener { exception ->
+                Log.d("!!!", "GET failed with ", exception)
+            }
     }
 
     private fun handleDate() {
@@ -248,6 +260,7 @@ class AddLocationActivity : AppCompatActivity() {
                     Manifest.permission.CAMERA,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.READ_MEDIA_IMAGES,
                     Manifest.permission.ACCESS_BACKGROUND_LOCATION,
                     Manifest.permission.ACCESS_MEDIA_LOCATION
                 ),
@@ -261,6 +274,10 @@ class AddLocationActivity : AppCompatActivity() {
             this,
             Manifest.permission.CAMERA
         ) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.READ_MEDIA_IMAGES
+                ) == PackageManager.PERMISSION_GRANTED &&
                 ContextCompat.checkSelfPermission(
                     this,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -304,74 +321,100 @@ class AddLocationActivity : AppCompatActivity() {
         startActivityForResult(galleryIntent, REQUEST_GALLERY)
     }
 
+    //    private fun openCamera() {
+//        // Create an intent to capture an image
+//        val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+//        if (cameraIntent.resolveActivity(packageManager) != null) {
+//            // Create the file where the photo should go
+//            photoFile = try {
+//                createImageFile()
+//            } catch (ex: IOException) {
+//                // Error occurred while creating the File
+//                null
+//            }
+//
+//            // Continue only if the File was successfully created
+//            photoFile?.let {
+//
+//                val photoURI: Uri = FileProvider.getUriForFile(
+//                    this,
+//                    "com.example.myheliports.fileprovider",
+//                    it
+//                )
+//                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+//                startActivityForResult(cameraIntent, REQUEST_CAMERA)
+//            }
+//        }
+//    }
     private fun openCamera() {
-        // Create an intent to capture an image
-        val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        if (cameraIntent.resolveActivity(packageManager) != null) {
-            // Create the file where the photo should go
-            photoFile = try {
-                createImageFile()
-            } catch (ex: IOException) {
-                // Error occurred while creating the File
-                null
+
+            val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+            if (takePictureIntent.resolveActivity(packageManager) != null) {
+                photoUri = createImageFile()
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
+                startActivityForResult(takePictureIntent, REQUEST_CAMERA)
             }
 
-            // Continue only if the File was successfully created
-            photoFile?.let {
-
-                val photoURI: Uri = FileProvider.getUriForFile(
-                    this,
-                    "com.example.myheliports.fileprovider",
-                    it
-                )
-                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
-                startActivityForResult(cameraIntent, REQUEST_CAMERA)
-            }
-        }
     }
+//    private fun createImageFile(): File {
+//
+//        // Create an image file name
+//        val timeStamp: String =
+//            SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+//        val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+//
+//        // Create the file
+//        val imageFile = File.createTempFile(
+//            "JPEG_${timeStamp}_",
+//            ".jpg",
+//            storageDir
+//        )
+//
+//        file = imageFile
+//
+//        // Save a file path for use with ACTION_VIEW intents
+//        currentPhotoPath = imageFile.absolutePath
+//        Log.d("PhotoPath", "Current Photo Path: $currentPhotoPath")
+//
+//        val contentValues = ContentValues().apply {
+//            put(MediaStore.MediaColumns.DATA, imageFile.absolutePath)
+//            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+//            put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis())
+//        }
+//        contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+//
+//
+//        return imageFile
+//    }
 
-    private fun createImageFile(): File {
+    private fun createImageFile(): Uri {
 
-        // Create an image file name
-        val timeStamp: String =
-            SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-
-        // Create the file
-        val imageFile = File.createTempFile(
-            "JPEG_${timeStamp}_",
-            ".jpg",
-            storageDir
-        )
-
-        file = imageFile
-
-        // Save a file path for use with ACTION_VIEW intents
-        currentPhotoPath = imageFile.absolutePath
-        Log.d("PhotoPath", "Current Photo Path: $currentPhotoPath")
-
+        val displayName = "myImage_${System.currentTimeMillis()}"
+        fileName = displayName
         val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DATA, imageFile.absolutePath)
+            put(MediaStore.Images.Media.DISPLAY_NAME, displayName)
             put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-            put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis())
+            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/MyAppImages")
         }
-        contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
 
+        // Skapa en ny fil i MediaStore och få dess URI.
+        val uri =
+            contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
 
-        return imageFile
+        fileURI = uri
+        return uri ?: throw IOException("Failed to create new MediaStore record.")
     }
 
-    private fun extractExifData(photoPath: String? = null, uri: Uri? = null) {
+    private fun extractExifData(uri: Uri? = null) {
 
         val exifInterface = when {
-            photoPath != null -> ExifInterface(photoPath)
+
             uri != null -> {
                 val inputStream = contentResolver.openInputStream(uri)
                 ExifInterface(inputStream!!)
-
             }
 
-            else -> throw IllegalArgumentException("Both photoPath and uri cannot be null")
+            else -> throw IllegalArgumentException("uri cannot be null")
         }
 
         // Extract date
@@ -379,23 +422,20 @@ class AddLocationActivity : AppCompatActivity() {
 
         if (!dateTaken.isNullOrBlank()) {
 
-            // Skapa ett SimpleDateFormat-objekt för att tolka datumet från ExifInterface
+            //Create a SimpleDateFormat object to interpret ExifInterface
             val formatExif = SimpleDateFormat("yyyy:MM:dd HH:mm:ss", Locale.getDefault())
 
-            // Konvertera dateTaken till ett Date-objekt
+            //Convert to Date
             val date = formatExif.parse(dateTaken)
-
             dateOfPhotoTimestamp = Timestamp(date)
 
-            // Skapa ett annat SimpleDateFormat-objekt för att formatera datumet som du vill ha det
+            //Convert again
             val formatThis = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-
-            // Konvertera date till en sträng med önskat format
             val dateString = formatThis.format(date)
             dateOfPhoto.setText(dateString)
         }
 
-        // Extract location
+        //Extract location
         val latLong = FloatArray(2)
         val hasLatLong = exifInterface.getLatLong(latLong)
 
@@ -419,7 +459,7 @@ class AddLocationActivity : AppCompatActivity() {
                     // Handle the selected image from the gallery
                     data?.data?.let { uri ->
                         photoViewModel.setPhotoUri(uri)
-                        extractExifData(null, uri)
+                        extractExifData(uri)
                         fileURI = uri
                     }
                 }
@@ -427,18 +467,77 @@ class AddLocationActivity : AppCompatActivity() {
 
             REQUEST_CAMERA -> {
                 if (resultCode == RESULT_OK) {
-                    // Handle the photo taken by the camera
-                    photoFile?.let {
-                        val photoUri = Uri.fromFile(it)
-                        photoViewModel.setPhotoUri(photoUri)
-                        // Extract EXIF data from the camera image
-                        extractExifData(it.absolutePath, null)
-                    } ?: run {
-                        // Handle the case where photoFile is null
-                        Log.e("Camera", "Photo file is unexpectedly null")
+                    photoUri?.let { uri ->
+                        photoViewModel.setPhotoUri(uri)
+                        extractExifData(uri)
+                        fileURI = uri
                     }
                 }
             }
+        }
+    }
+
+    private fun uploadImage(
+        uri: Uri,
+        fileName: String,
+        documentId: String,
+        latDouble: Double,
+        longDouble: Double
+    ): Task<Uri> {
+        val storageRef = storage.reference.child("images/$fileName")
+
+        val inputStream = contentResolver.openInputStream(uri)
+        val data = inputStream?.readBytes()
+
+        if (data == null) {
+            Log.w("!!!", "Failed to read file data")
+            return Tasks.forException(IOException("Failed to read file data"))
+        }
+
+        val uploadTask = storageRef.putBytes(data)
+
+        val progressBar = findViewById<ProgressBar>(R.id.progressBar)
+
+        uploadTask.addOnProgressListener { taskSnapshot ->
+            val progress = (100.0 * taskSnapshot.bytesTransferred) / taskSnapshot.totalByteCount
+            progressBar.visibility = View.VISIBLE
+            progressBar.progress = progress.toInt()
+        }.continueWithTask { task ->
+            if (!task.isSuccessful) {
+                task.exception?.let {
+                    throw it
+                }
+            }
+            storageRef.downloadUrl
+        }.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+
+                val downloadUri = task.result
+                val imageUrl = downloadUri.toString()
+
+                addLocation(latDouble, longDouble, imageUrl)
+
+//                    updateLocationData(documentId, downloadUri.toString())
+            } else {
+                // Logga felet för felsökning
+                Log.w("!!!", "Upload failed")
+
+                progressBar.visibility = View.GONE
+
+                fadeViews(viewsToFade, false)
+                saveLocationButton.isEnabled = true
+
+                // Visa ett felmeddelande till användaren
+                Toast.makeText(this, "Save failed", Toast.LENGTH_LONG).show()
+            }
+        }
+        return uploadTask.continueWithTask { task ->
+            if (!task.isSuccessful) {
+                task.exception?.let {
+                    throw it
+                }
+            }
+            storageRef.downloadUrl
         }
     }
 
@@ -466,14 +565,8 @@ class AddLocationActivity : AppCompatActivity() {
 
         rating = ratingView.numStars
 
-        var fileLocation = if (file != null) {
-            Uri.fromFile(file)
-        } else {
-            fileURI
-        }
 
-        if (fileLocation == null) {
-
+        if (fileURI == null) {
             val defaultImageResId = R.raw.default1
             val inputStream = resources.openRawResource(defaultImageResId)
             val defaultFile = File(this.filesDir, "default1.jpg")
@@ -482,76 +575,62 @@ class AddLocationActivity : AppCompatActivity() {
                     input.copyTo(output)
                 }
             }
-
-            fileLocation = Uri.fromFile(defaultFile)
+            fileURI = Uri.fromFile(defaultFile)
         }
 
-        val fileName = fileLocation?.lastPathSegment.toString()  // Detta ger dig filnamnet
-        val storageRef = storage.reference.child("images/$fileName")
-
-        val uploadTask = fileLocation?.let { storageRef.putFile(it) }
-
-        val progressBar = findViewById<ProgressBar>(R.id.progressBar)
-
-        uploadTask?.addOnProgressListener { taskSnapshot ->
-            //Calculate progress
-            val progress = (100.0 * taskSnapshot.bytesTransferred) / taskSnapshot.totalByteCount
-
-            //Show progress
-            progressBar.visibility = View.VISIBLE
-            fadeViews(viewsToFade, true)
-            progressBar.progress = progress.toInt()
-        }
-
-        uploadTask?.addOnSuccessListener {
-            storageRef.downloadUrl.addOnSuccessListener { uri ->
-
-                val imageUrl = uri.toString()
-                val user = auth.currentUser
-
-                if (user == null) {
-                    //Error handling in case user  is null
-                    Log.w("!!!", "User not signed in")
-                } else {
-                    //Create Location Object
-                    val location = Location(
-                        name = nameOfLocation.text.toString(),
-                        dateOfPhoto = dateOfPhotoTimestamp,
-                        description = descriptionOfLocation.text.toString(),
-                        lat = latDouble,
-                        long = longDouble,
-                        rating = rating,
-                        imageLink = imageUrl,
-                        userId = user.uid
-                    )
-
-                    db.collection("locations").add(location)
-                        .addOnSuccessListener { documentReference ->
-                            Log.d("!!!", "DocumentSnapshot added with ID: ${documentReference.id}")
-
-                            progressBar.visibility = View.GONE
-                            finish()
-                        }
-                        .addOnFailureListener { e ->
-                            Log.w("!!!", "Error adding document", e)
-                            fadeViews(viewsToFade, false)
-                            saveLocationButton.isEnabled = true
-                        }
-
+        val fileName: String? =
+            fileURI?.let {
+                contentResolver.query(it, null, null, null, null)?.use { cursor ->
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    cursor.moveToFirst()
+                    cursor.getString(nameIndex)
                 }
             }
+
+        val mimeType = fileURI?.let { contentResolver.getType(it) }
+        val extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType)
+
+        val fullFileName = "$fileName.$extension"
+
+        fileURI?.let {
+            fullFileName.let { it1 ->
+                uploadImage(it, it1, "", latDouble, longDouble)
+            }
         }
-        uploadTask?.addOnFailureListener { exception ->
-            // Logga felet för felsökning
-            Log.w("!!!", "Upload failed: $exception")
+    }
 
-            progressBar.visibility = View.GONE
+    private fun addLocation(latDouble: Double, longDouble: Double, imageUrl: String) {
+        val user = auth.currentUser
 
-            fadeViews(viewsToFade, false)
-            saveLocationButton.isEnabled = true
+        if (user == null) {
+            //Error handling in case user  is null
+            Log.w("!!!", "User not signed in")
+        } else {
+            //Create Location Object
+            val location = Location(
+                name = nameOfLocation.text.toString(),
+                dateOfPhoto = dateOfPhotoTimestamp,
+                description = descriptionOfLocation.text.toString(),
+                lat = latDouble,
+                long = longDouble,
+                rating = rating,
+                imageLink = imageUrl,
+                userId = user.uid
+            )
 
-            // Visa ett felmeddelande till användaren
-            Toast.makeText(this, "Save failed: ${exception.message}", Toast.LENGTH_LONG).show()
+            db.collection("locations").add(location)
+                .addOnSuccessListener { documentReference ->
+                    Log.d("!!!", "DocumentSnapshot added with ID: ${documentReference.id}")
+                    val progressBar = findViewById<ProgressBar>(R.id.progressBar)
+                    progressBar.visibility = View.GONE
+                    finish()
+                }
+                .addOnFailureListener { e ->
+                    Log.w("!!!", "Error adding document", e)
+
+                    fadeViews(viewsToFade, false)
+                    saveLocationButton.isEnabled = true
+                }
         }
     }
 

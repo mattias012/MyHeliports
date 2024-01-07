@@ -13,4 +13,8 @@ class PhotoViewModel : androidx.lifecycle.ViewModel() {
     fun setPhotoUri(uri: Uri) {
         _photoLiveData.value = uri
     }
+
+    fun getPhotoUri(): Uri? {
+        return _photoLiveData.value
+    }
 }

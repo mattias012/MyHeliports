@@ -50,6 +50,13 @@
                     android:layout_height="wrap_content"
                     android:text="Vara"
                     android:textAppearance="?attr/textAppearanceTitleLarge" />
+                <TextView
+                    android:id="@+id/joinedViewUser"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textStyle="italic"
+                    android:text="2023-12-24"
+                    android:textAppearance="?attr/textAppearanceTitleSmall" />
 
 
             </LinearLayout>

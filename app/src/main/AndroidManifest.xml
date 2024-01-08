@@ -27,10 +27,8 @@
         tools:targetApi="31" >
         <activity
             android:name=".FullscreenImageActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:exported="false"
-            android:label="@string/title_activity_fullscreen_image"
-            android:theme="@style/Theme.MyHeliports.Fullscreen" />
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:exported="false" />
         <activity
             android:name=".ProfileActivity"
             android:exported="false" />

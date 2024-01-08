@@ -256,12 +256,12 @@ class ListUserFragment : Fragment() {
         } else {
             //Query firestore after ish-wildcard
             if (getAll) {
-                db.collection("users").orderBy("name").startAt(searchThisString)
+                db.collection("users").orderBy("userName").startAt(searchThisString)
                     .endAt(searchThisString + "\uf8ff")
             } else {
                 val user =  auth.currentUser
                 if (user !=null) {
-                    db.collection("users").whereEqualTo("userId", user.uid).orderBy("name")
+                    db.collection("users").whereEqualTo("userId", user.uid).orderBy("userName")
                         .startAt(searchThisString)
                         .endAt(searchThisString + "\uf8ff")
                 }

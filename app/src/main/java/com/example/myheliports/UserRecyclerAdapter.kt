@@ -40,9 +40,12 @@ class UserRecyclerAdapter(private val context: Context, private val userList: Li
 //            (it.context as StartActivity).showLocationFragment(documentId)
         }
 
-        val date = user.timestamp?.toDate()
-        val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val dateString = format.format(date)
+        var  dateString = ""
+        if (user.timestamp != null) {
+            val date = user.timestamp?.toDate()
+            val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+             dateString = format.format(date)
+        }
 
         holder.joinedViewUser?.text = "Joined $dateString"
 

@@ -139,6 +139,16 @@ class ShowLocationFragment : Fragment() {
                     false
                 }
             }
+
+            imageViewLocation.setOnClickListener {
+
+                getLocationImage(documentId) { imageLink ->
+                    val intent = Intent(requireContext(), FullscreenImageActivity::class.java)
+                    intent.putExtra("imageLink", imageLink)
+                    startActivity(intent)
+                }
+            }
+
         }
         return view
     }
@@ -178,7 +188,7 @@ class ShowLocationFragment : Fragment() {
 
                     R.id.edit -> {
                         val intent = Intent(requireContext(), AddLocationActivity::class.java)
-                            intent.putExtra("documentId", documentId)
+                        intent.putExtra("documentId", documentId)
                         startActivity(intent)
                         true
                     }
@@ -206,8 +216,8 @@ class ShowLocationFragment : Fragment() {
         val date = location.dateOfPhoto?.toDate()
         val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         var dateString = ""
-        if (date != null){
-             dateString = format.format(date)
+        if (date != null) {
+            dateString = format.format(date)
         }
 
         dateOfPhotoLocation.text = dateString
@@ -362,6 +372,17 @@ class ShowLocationFragment : Fragment() {
             }
     }
 
+    private fun getLocationImage(documentId: String, callback: (String) -> Unit) {
+        db.collection("locations").document(documentId).get()
+            .addOnSuccessListener { document ->
+                val imageLink = document.getString("imageLink") ?: "Location"
+                callback(imageLink)
+            }
+            .addOnFailureListener { exception ->
+                Log.d("!!!", "GET failed with ", exception)
+            }
+    }
+
     private fun getUserName(userId: String, location: Location) {
         db.collection("users").whereEqualTo("userId", userId).get()
             .addOnSuccessListener { userDocument ->
@@ -418,9 +439,11 @@ class ShowLocationFragment : Fragment() {
             is MapsFragment -> {
                 (activity as StartActivity).goBack(R.id.item_2, SharedData.prevFragment)
             }
+
             is ListLocationFragment -> {
                 (activity as StartActivity).goBack(R.id.item_1, SharedData.prevFragment)
             }
+
             else -> {
                 (activity as StartActivity).goBack(R.id.item_1, SharedData.prevFragment)
             }

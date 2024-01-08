@@ -1,8 +1,10 @@
 package com.example.myheliports
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -414,22 +416,34 @@ class ShowLocationFragment : Fragment() {
         imageLink = location.imageLink
         titleLocationToShare = location.name
     }
-
     private fun shareLocation() {
-        // Skapa en Google Maps länk
-        val googleMapsLink = "http://maps.google.com/maps?q=$lat,$long"
+
+        // Check if Google Maps app is installed
+        val mapsAppPackage = "com.google.android.apps.maps"
+        val mapsIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat%2C$long"))
+        mapsIntent.setPackage(mapsAppPackage)
+
+        var googleMapsLink = ""
+        if (mapsIntent.resolveActivity(requireContext().packageManager) != null) {
+//             googleMapsLink = "geo:$lat,$long"
+            googleMapsLink = "https://www.google.com/maps/search/?api=1&query=$lat%2C$long"
+        } else {
+             googleMapsLink = "https://www.google.com/maps/search/?api=1&query=$lat%2C$long"
+        }
 
         val imageUri = imageLink
 
-        val shareString = "$titleLocationToShare - View it on Google Maps: \n$googleMapsLink"
+        val shareString = "$titleLocationToShare - View it on Google Maps: "
 
         val shareIntent = Intent().apply {
             action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_TEXT, shareString)
-            putExtra(Intent.EXTRA_STREAM, imageUri)
+            putExtra(Intent.EXTRA_TEXT, googleMapsLink)
+//            putExtra(Intent.EXTRA_TEXT, shareString)
+//            putExtra(Intent.EXTRA_STREAM, imageUri)
             type = "image/*"
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
+
         startActivity(Intent.createChooser(shareIntent, "Share via"))
     }
 

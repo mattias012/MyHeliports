@@ -24,6 +24,13 @@
         android:contentDescription="Edit Location"
         app:showAsAction="never"
         />
+    <item
+        android:id="@+id/delete"
+        android:icon="@drawable/baseline_edit_note_24"
+        android:title="Delete Location"
+        android:contentDescription="Delete Location"
+        app:showAsAction="never"
+        />
 
 
     <item

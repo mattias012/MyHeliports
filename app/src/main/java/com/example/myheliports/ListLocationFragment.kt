@@ -110,8 +110,8 @@ class ListLocationFragment : Fragment() {
         }
         setupTextWatcher(searchText)
 
-
-            searchDataBase("", getAll)
+        //First search, show only your own places
+            searchDataBase("", false)
 
             //Set to adapter
             if (safeContext != null) {

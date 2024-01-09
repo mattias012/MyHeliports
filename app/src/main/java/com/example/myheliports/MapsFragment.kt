@@ -95,6 +95,7 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
         val documentId = arguments?.getString("documentId")
 
         if (documentId != null){
+
             moveCameraToLocation(documentId)
         }
         else {
@@ -120,7 +121,7 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
 
         //Setup menu
         topBarAndMenuSetup()
-        bottomMenu(R.id.item_2, view)
+//        setMenuItem(view)
 
         return view
     }
@@ -287,7 +288,7 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
                             .setMessage("Browse the map, click on a marker to get more information of the location. At this time all users places are showed as a default setting.\n \n" +
                                     "If you get lost, hit the GPS icon to center map on your current location.")
                             .setNeutralButton("OK") { dialog, which ->
-                                // Respond to neutral button press
+
                             }
                             .show()
                         true
@@ -306,20 +307,38 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
                 }
             })
     }
+//    private fun setMenuItem(view: View){
+//
+//        val bottomNavigation = view?.findViewById<NavigationBarView>(R.id.bottom_navigation)
+//        var isManuallySelected = false
+//
+//        isManuallySelected = true
+//        bottomNavigation?.selectedItemId = R.id.item_2
+//
+//        //Setup bottom menu
+//        activity?.let {
+//            bottomNavigation?.setOnNavigationItemSelectedListener { item ->
+//                if (isManuallySelected) {
+//                    isManuallySelected = false
+//                    return@setOnNavigationItemSelectedListener true
+//                }
+//            }
+//        }
+//    }
     private fun goBackStuff() {
 
         (activity as StartActivity).goBack(null, null)
         addItemButton.show()
 
     }
-    private fun bottomMenu(itemSelected: Int?, view: View){
-
-        val bottomNavigation = view?.findViewById<NavigationBarView>(R.id.bottom_navigation)
-
-        if(itemSelected != null){
-            bottomNavigation?.selectedItemId = itemSelected
-        }
-    }
+//    private fun bottomMenu(itemSelected: Int?, view: View){
+//
+//        val bottomNavigation = view?.findViewById<NavigationBarView>(R.id.bottom_navigation)
+//
+//        if(itemSelected != null){
+//            bottomNavigation?.selectedItemId = itemSelected
+//        }
+//    }
     override fun onLinkClicked(documentId: String) {
         //Navigate to ShowLocation with documentId
         parentFragmentManager.beginTransaction()

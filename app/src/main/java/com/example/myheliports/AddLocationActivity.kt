@@ -92,12 +92,14 @@ class AddLocationActivity : AppCompatActivity() {
     private lateinit var currentPhotoPath: String
 
     private var photoUri: Uri? = null
-    var dateOfPhotoTimestamp: Timestamp? = null
+    private var dateOfPhotoTimestamp: Timestamp? = null
     var file: File? = null  // Definiera file här
-    var fileURI: Uri? = null
-    var fileName: String? = null
-    var rating: Int? = null
+    private var fileURI: Uri? = null
+    private var fileName: String? = null
+    private var rating: Int? = null
 
+//    private var defaultFile: File? = null  // Definiera file här
+//    private var defaultFileUri: Uri? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -106,6 +108,9 @@ class AddLocationActivity : AppCompatActivity() {
         db = Firebase.firestore
         auth = Firebase.auth
         storage = Firebase.storage
+
+//        defaultFile = File(this.filesDir, "default1.jpg")
+//        defaultFileUri = Uri.fromFile(defaultFile)
 
         val documentId = intent.getStringExtra("documentId")
 
@@ -124,7 +129,7 @@ class AddLocationActivity : AppCompatActivity() {
         handleDate()
 
         saveLocationButton.setOnClickListener {
-            saveLocation()
+            saveLocation(documentId)
         }
 
         val topAppBar = findViewById<MaterialToolbar>(R.id.topAppBar)
@@ -157,15 +162,6 @@ class AddLocationActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateLocationData(documentId: String) {
-
-        val docRef = db.collection("locations").document(documentId)
-
-        docRef
-            .update("myField", "newValue")
-            .addOnSuccessListener { Log.d("!!!", "DocumentSnapshot successfully updated!") }
-            .addOnFailureListener { e -> Log.w("!!!", "Error updating document", e) }
-    }
 
     private fun getLocationData(documentId: String) {
         db.collection("locations").document(documentId).get()
@@ -317,15 +313,17 @@ class AddLocationActivity : AppCompatActivity() {
         val galleryIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
         startActivityForResult(galleryIntent, REQUEST_GALLERY)
     }
+
     private fun openCamera() {
 
-            val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            if (takePictureIntent.resolveActivity(packageManager) != null) {
-                photoUri = createImageFile()
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
-                startActivityForResult(takePictureIntent, REQUEST_CAMERA)
-            }
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        if (takePictureIntent.resolveActivity(packageManager) != null) {
+            photoUri = createImageFile()
+            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
+            startActivityForResult(takePictureIntent, REQUEST_CAMERA)
+        }
     }
+
     private fun createImageFile(): Uri {
 
         val displayName = "myImage_${System.currentTimeMillis()}"
@@ -419,10 +417,14 @@ class AddLocationActivity : AppCompatActivity() {
     private fun uploadImage(
         uri: Uri,
         fileName: String,
-        documentId: String,
+        documentId: String?,
         latDouble: Double,
         longDouble: Double
     ): Task<Uri> {
+
+//        if (uri != defaultFileUri) {
+        //if not standard file it means that user HAS changed the photo and we need to upload it
+
         val storageRef = storage.reference.child("images/$fileName")
 
         val inputStream = contentResolver.openInputStream(uri)
@@ -454,11 +456,14 @@ class AddLocationActivity : AppCompatActivity() {
                 val downloadUri = task.result
                 val imageUrl = downloadUri.toString()
 
-                addLocation(latDouble, longDouble, imageUrl)
-
-//                    updateLocationData(documentId, downloadUri.toString())
+                if (documentId != null){
+                    updateLocationData(documentId, latDouble, longDouble, imageUrl)
+                }
+                else {
+                    addLocation(latDouble, longDouble, imageUrl)
+                }
             } else {
-                // Logga felet för felsökning
+
                 Log.w("!!!", "Upload failed")
 
                 progressBar.visibility = View.GONE
@@ -466,21 +471,26 @@ class AddLocationActivity : AppCompatActivity() {
                 fadeViews(viewsToFade, false)
                 saveLocationButton.isEnabled = true
 
-                // Visa ett felmeddelande till användaren
+                //Show fail message
                 Toast.makeText(this, "Save failed", Toast.LENGTH_LONG).show()
             }
         }
         return uploadTask.continueWithTask { task ->
             if (!task.isSuccessful) {
+
+                Toast.makeText(this, "Location added", Toast.LENGTH_LONG).show()
                 task.exception?.let {
                     throw it
                 }
             }
             storageRef.downloadUrl
         }
+//        }
+//
+//        return Tasks.forResult(uri)
     }
 
-    private fun saveLocation() {
+    private fun saveLocation(documentId: String?) {
 
         saveLocationButton.isEnabled = false
 
@@ -504,38 +514,95 @@ class AddLocationActivity : AppCompatActivity() {
 
         rating = ratingView.numStars
 
-
-        if (fileURI == null) {
-            val defaultImageResId = R.raw.default1
-            val inputStream = resources.openRawResource(defaultImageResId)
-            val defaultFile = File(this.filesDir, "default1.jpg")
-            inputStream.use { input ->
-                defaultFile.outputStream().use { output ->
-                    input.copyTo(output)
+        //In case of a new location
+        if (documentId == null) {
+            if (fileURI == null) {
+                val defaultImageResId = R.raw.default1
+                val inputStream = resources.openRawResource(defaultImageResId)
+                val defaultFile = File(this.filesDir, "default1.jpg")
+                inputStream.use { input ->
+                    defaultFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
                 }
+                fileURI = Uri.fromFile(defaultFile)
             }
-            fileURI = Uri.fromFile(defaultFile)
-        }
 
-        val fileName: String? =
+            val fileName: String? =
+                fileURI?.let {
+                    contentResolver.query(it, null, null, null, null)?.use { cursor ->
+                        val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        cursor.moveToFirst()
+                        cursor.getString(nameIndex)
+                    }
+                }
+
+            val mimeType = fileURI?.let { contentResolver.getType(it) }
+            val extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType)
+
+            val fullFileName = "$fileName.$extension"
+
             fileURI?.let {
-                contentResolver.query(it, null, null, null, null)?.use { cursor ->
-                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                    cursor.moveToFirst()
-                    cursor.getString(nameIndex)
-                }
-            }
-
-        val mimeType = fileURI?.let { contentResolver.getType(it) }
-        val extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType)
-
-        val fullFileName = "$fileName.$extension"
-
-        fileURI?.let {
-            fullFileName.let { it1 ->
-                uploadImage(it, it1, "", latDouble, longDouble)
+                uploadImage(it, fullFileName, null, latDouble, longDouble)
             }
         }
+        //In case of an edit
+        else {
+
+            //If fileURI is null that means that no new image has been selected and we don't upload a new one
+            if (fileURI == null) {
+
+                updateLocationData(documentId, latDouble, longDouble, null)
+            }
+
+            //else update location with new data and new photo
+            else {
+
+                val fileName: String? =
+                    fileURI?.let {
+                        contentResolver.query(it, null, null, null, null)?.use { cursor ->
+                            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                            cursor.moveToFirst()
+                            cursor.getString(nameIndex)
+                        }
+                    }
+
+                val mimeType = fileURI?.let { contentResolver.getType(it) }
+                val extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType)
+
+                val fullFileName = "$fileName.$extension"
+
+                fileURI?.let {
+                    uploadImage(it, fullFileName, documentId, latDouble, longDouble)
+
+                }
+            }
+        }
+    }
+    private fun updateLocationData(documentId: String, latDouble: Double, longDouble: Double, imageUrl: String?) {
+
+        val docRef = db.collection("locations").document(documentId)
+
+        if (imageUrl != null)
+        docRef
+            .update("name", nameOfLocation.text.toString(), "dateOfPhoto", dateOfPhotoTimestamp, "description", descriptionOfLocation.text.toString(), "rating", rating, "lat", latDouble, "long", longDouble, "lastEdit", null, "imageLink", imageUrl)
+
+            .addOnSuccessListener {
+                Log.d("!!!", "DocumentSnapshot successfully updated!")
+                finish()
+            }
+            .addOnFailureListener { e -> Log.w("!!!", "Error updating document", e) }
+        else {
+            docRef
+                .update("name", nameOfLocation.text.toString(), "dateOfPhoto", dateOfPhotoTimestamp, "description", descriptionOfLocation.text.toString(), "rating", rating, "lat", latDouble, "long", longDouble, "lastEdit", null)
+
+                .addOnSuccessListener {
+                    Log.d("!!!", "DocumentSnapshot successfully updated!")
+                    finish()
+                }
+                .addOnFailureListener { e -> Log.w("!!!", "Error updating document", e) }
+        }
+
     }
 
     private fun addLocation(latDouble: Double, longDouble: Double, imageUrl: String) {

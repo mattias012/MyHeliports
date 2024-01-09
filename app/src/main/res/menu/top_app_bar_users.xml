@@ -10,36 +10,36 @@
 <!--        />-->
 
     <item
-        android:id="@+id/showmap"
-        android:icon="@drawable/baseline_map_24"
-        android:title="Show location on map"
-        android:contentDescription="Show location on map"
+        android:id="@+id/person"
+        android:icon="@drawable/baseline_person_24"
+        android:title="My friends"
+        android:contentDescription="List your places only"
+        app:showAsAction="never"
+        />
+    <item
+        android:id="@+id/group"
+        android:icon="@drawable/baseline_groups_24"
+        android:title="All users"
+        android:contentDescription="All places view"
+        app:showAsAction="never"
+        />
+    <item
+        android:id="@+id/list"
+        android:icon="@drawable/baseline_format_list_bulleted_24"
+        android:title="List View"
+        android:contentDescription="List view"
         app:showAsAction="ifRoom"
         />
 
     <item
-        android:id="@+id/edit"
-        android:icon="@drawable/baseline_edit_note_24"
-        android:title="Edit Location"
-        android:contentDescription="Edit Location"
-        app:showAsAction="never"
-        />
-    <item
-        android:id="@+id/delete"
-        android:icon="@drawable/baseline_edit_note_24"
-        android:title="Delete Location"
-        android:contentDescription="Delete Location"
-        app:showAsAction="never"
-        />
-
-
-    <item
-        android:id="@+id/share"
-        android:icon="@drawable/baseline_share_24"
-        android:title="Share Location"
-        android:contentDescription="Share Location"
+        android:id="@+id/grid"
+        android:icon="@drawable/baseline_grid_view_24"
+        android:title="Grid View"
+        android:contentDescription="Grid view"
         app:showAsAction="ifRoom"
         />
+
+
 
     <item
         android:id="@+id/user"

@@ -1,8 +1,10 @@
 package com.example.myheliports
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -17,15 +19,16 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.RatingBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.divider.MaterialDivider
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
@@ -36,6 +39,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -73,6 +77,8 @@ class ShowLocationFragment : Fragment() {
 
     private lateinit var viewsToFade: List<View>
 
+    private var enableEdit = false
+
     companion object {
         fun newInstance(documentId: String): ShowLocationFragment {
             val fragment = ShowLocationFragment()
@@ -91,6 +97,8 @@ class ShowLocationFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+
+        SharedData.fragment = ShowLocationFragment()
 
         val view = inflater.inflate(R.layout.fragment_showlocation, container, false)
 
@@ -119,7 +127,7 @@ class ShowLocationFragment : Fragment() {
             }, 500)
 
             //Setup or menu
-            topBarAndMenuSetup()
+            topBarAndMenuSetup(documentId)
             //New layoutmanager with number of columns
             recyclerViewComments.layoutManager = LinearLayoutManager(requireContext())
             commentButton.setOnClickListener {
@@ -138,11 +146,20 @@ class ShowLocationFragment : Fragment() {
                 }
             }
 
-        }
+            imageViewLocation.setOnClickListener {
 
+                getLocationImage(documentId) { imageLink ->
+                    val intent = Intent(requireContext(), FullscreenImageActivity::class.java)
+                    intent.putExtra("imageLink", imageLink)
+                    startActivity(intent)
+                }
+            }
+
+        }
         return view
     }
-    private fun showHiddenViews(){
+
+    private fun showHiddenViews() {
         ratingBarLocation.visibility = View.VISIBLE
         materialDivider.visibility = View.VISIBLE
         materialDividerComments2.visibility = View.VISIBLE
@@ -152,7 +169,8 @@ class ShowLocationFragment : Fragment() {
         commentThis.visibility = View.VISIBLE
         commentButton.visibility = View.VISIBLE
     }
-    private fun topBarAndMenuSetup() {
+
+    private fun topBarAndMenuSetup(documentId: String) {
         //Setup topbar etc
         activity?.let {
             setupThisFragment(it)
@@ -169,12 +187,45 @@ class ShowLocationFragment : Fragment() {
                         true
                     }
 
+                    R.id.showmap -> {
+                        (requireContext() as StartActivity).showMapsFragment(documentId)
+                        true
+                    }
+
                     R.id.edit -> {
+                        if (enableEdit) {
+                            val intent = Intent(requireContext(), AddLocationActivity::class.java)
+                            intent.putExtra("documentId", documentId)
+                            startActivity(intent)
+                        } else {
+                            MaterialAlertDialogBuilder(requireContext())
+                                .setTitle("Edit location")
+                                .setMessage("Nope. You can only edit and delete your own locations.")
+                                .setNeutralButton("OK") { dialog, which ->
+
+                                }
+                                .show()
+                        }
                         true
                     }
 
                     R.id.share -> {
                         shareLocation()
+                        true
+                    }
+
+                    R.id.delete -> {
+                        if (enableEdit) {
+                            deleteLocation(documentId)
+                        } else {
+                            MaterialAlertDialogBuilder(requireContext())
+                                .setTitle("Delete location")
+                                .setMessage("Nope. You can only edit and delete your own locations.")
+                                .setNeutralButton("OK") { dialog, which ->
+
+                                }
+                                .show()
+                        }
                         true
                     }
 
@@ -195,7 +246,10 @@ class ShowLocationFragment : Fragment() {
     private fun fixPhotoDate(location: Location) {
         val date = location.dateOfPhoto?.toDate()
         val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val dateString = format.format(date)
+        var dateString = ""
+        if (date != null) {
+            dateString = format.format(date)
+        }
 
         dateOfPhotoLocation.text = dateString
     }
@@ -211,13 +265,19 @@ class ShowLocationFragment : Fragment() {
         return titleOfLocationIs
 
     }
-    fun Fragment.hideKeyboard() {
-        val inputMethodManager = activity?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+
+    private fun Fragment.hideKeyboard() {
+        val inputMethodManager =
+            activity?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
         val currentFocusedView = activity?.currentFocus
         currentFocusedView?.let {
-            inputMethodManager?.hideSoftInputFromWindow(it.windowToken, InputMethodManager.HIDE_NOT_ALWAYS)
+            inputMethodManager?.hideSoftInputFromWindow(
+                it.windowToken,
+                InputMethodManager.HIDE_NOT_ALWAYS
+            )
         }
     }
+
     private fun addComment(locationId: String) {
         val user = auth.currentUser
 
@@ -230,8 +290,9 @@ class ShowLocationFragment : Fragment() {
         commentThis.setText("")
 
         if (user == null) {
-            // Visa ett felmeddelande eller på annat sätt hantera situationen
-            Log.w("!!!", "User not signed in")
+            //If for some reason user is not signed in, send to main.
+            val intent = Intent(requireContext(), MainActivity::class.java)
+            startActivity(intent)
         } else {
             //Create Comment Object
             val comment = Comment(
@@ -252,18 +313,18 @@ class ShowLocationFragment : Fragment() {
                     commentThis.isEnabled = true
                 }
                 .addOnFailureListener { e ->
-                    Log.w("!!!", "Error adding document", e)
-//                    fadeViews(viewsToFade, false)
-//                    saveLocationButton.isEnabled = true
+                    Log.w("!!!", "Error adding comment", e)
+                    fadeViews(viewsToFade, false)
+                    commentButton.isEnabled = true
                 }
-
         }
     }
 
     private fun showComments(locationId: String) {
 
         commentList.clear()
-        db.collection("comments").whereEqualTo("locationId", locationId).orderBy("timestamp", Query.Direction.DESCENDING).get()
+        db.collection("comments").whereEqualTo("locationId", locationId)
+            .orderBy("timestamp", Query.Direction.DESCENDING).get()
             .addOnSuccessListener { documents ->
                 for (document in documents) {
                     val comment = document.toObject(Comment::class.java)
@@ -276,20 +337,25 @@ class ShowLocationFragment : Fragment() {
             .addOnFailureListener { exception ->
                 Log.d("!!!", "GET failed with ", exception)
             }
-
-
     }
 
     private fun getLocationData(documentId: String) {
-        db.collection("locations").document(documentId).get()
-            .addOnSuccessListener { document ->
-                val location = document.toObject(Location::class.java)
-                location?.let {
+        db.collection("locations").document(documentId).addSnapshotListener { snapshot, e ->
+            if (e != null) {
+                Log.w("!!!", "Listen failed.", e)
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null && snapshot.exists()) {
+                val location = snapshot.toObject(Location::class.java)
+
+                if (location != null) {
 
                     //Get user info userId
                     val userId = location.userId
                     if (userId != null) {
-                        getUserName(userId, it)
+                        getUserName(userId, location)
+
                     }
 
                     //Get and set ratingBar
@@ -305,7 +371,7 @@ class ShowLocationFragment : Fragment() {
                     descriptionLocation.text = location.description
 
                     //Fix date of photo
-                    fixPhotoDate(it)
+                    fixPhotoDate(location)
 
                     //Print Lat/Long
                     latlongTextView.text = "@ ${location.lat} / ${location.long}"
@@ -318,24 +384,42 @@ class ShowLocationFragment : Fragment() {
                         imageViewLocation.setImageResource(R.drawable.default1)
                     }
 
-                    setForShare(it)
+                    setForShare(location)
 
-
-                } ?: run {
-                    Log.d("!!!", "No such document")
+                    val user = auth.currentUser
+                    if (location.userId == user?.uid) {
+                        enableEdit = true
+                    }
                 }
+            } else {
+                Log.d("!!!", "Current data: null")
             }
-            .addOnFailureListener { exception ->
-                Log.d("!!!", "GET failed with ", exception)
-            }
+        }
     }
 
     private fun getLocationTitle(documentId: String) {
-        db.collection("locations").document(documentId).get()
-            .addOnSuccessListener { document ->
-                val checkTitle = document.getString("name") ?: "Location"
+
+        db.collection("locations").document(documentId).addSnapshotListener { snapshot, e ->
+            if (e != null) {
+                Log.w("!!!", "Listen failed.", e)
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null && snapshot.exists()) {
+                val checkTitle = snapshot.getString("name") ?: "Location"
                 val titleOfLocationIs = fixTitleOfLocation(checkTitle)
                 topAppBar.title = titleOfLocationIs
+            } else {
+                Log.d("!!!", "Current data: null")
+            }
+        }
+    }
+
+    private fun getLocationImage(documentId: String, callback: (String) -> Unit) {
+        db.collection("locations").document(documentId).get()
+            .addOnSuccessListener { document ->
+                val imageLink = document.getString("imageLink") ?: "Location"
+                callback(imageLink)
             }
             .addOnFailureListener { exception ->
                 Log.d("!!!", "GET failed with ", exception)
@@ -345,7 +429,7 @@ class ShowLocationFragment : Fragment() {
     private fun getUserName(userId: String, location: Location) {
         db.collection("users").whereEqualTo("userId", userId).get()
             .addOnSuccessListener { userDocument ->
-                // Kontrollera om frågan returnerade något dokument
+                //Handle on success
                 if (!userDocument.isEmpty) {
 
                     val document = userDocument.documents[0]
@@ -354,17 +438,95 @@ class ShowLocationFragment : Fragment() {
                     user?.let {
 
                         // Set date added of location to the by line
-                        val date = location.timestamp?.toDate()
-                        val format = SimpleDateFormat(
-                            "yyyy-MM-dd HH:mm",
-                            Locale.getDefault()
-                        )
-                        val dateString = format.format(date)
+                        var dateString = ""
+                        if (location.timestamp != null) {
+                            val date = location.timestamp?.toDate()
+                            val format = SimpleDateFormat(
+                                "yyyy-MM-dd HH:mm",
+                                Locale.getDefault()
+                            )
+                             dateString = format.format(date)
+                        }
+
+                        var dateStringEdited = ""
+                        if (location.lastEdit != null) {
+                            val dateEdit = location.lastEdit?.toDate()
+                            val formatEdit = SimpleDateFormat(
+                                "yyyy-MM-dd HH:mm",
+                                Locale.getDefault()
+                            )
+                             dateStringEdited = formatEdit.format(dateEdit)
+                        }
 
                         addedByUser.text = "by ${user.userName} on $dateString"
+
+                        if (dateStringEdited != dateString){
+                            addedByUser.text = "by ${user.userName} on $dateString, edited on $dateStringEdited"
+                        }
                     }
                 }
             }
+    }
+
+    private fun deleteLocation(documentId: String) {
+
+        val imageLinked = getLocationImage(documentId) { imageLink ->
+
+
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Delete this location")
+                .setMessage("Are you sure you want to delete this location and all data attached to it?")
+                .setNeutralButton("Cancel") { dialog, which ->
+                    // Respond to neutral button press
+                }
+                .setPositiveButton("Yes, I want to delete this location") { dialog, which ->
+                    //Delete the location and comments and images related to this place
+
+
+                            val batch = db.batch()
+
+                            val locationRef = db.collection("locations").document(documentId)
+                            batch.delete(locationRef)
+
+                            db.collection("comments").whereEqualTo("locationId", documentId).get()
+                                .addOnSuccessListener { documents ->
+                                    for (document in documents) {
+                                        batch.delete(document.reference)
+                                    }
+                                }
+
+                            // Kör batchen
+                            batch.commit()
+                                .addOnSuccessListener {
+                                    val storage = Firebase.storage
+
+                                    val imageRef = storage.getReferenceFromUrl(imageLink)
+
+                                    imageRef.delete()
+                                        .addOnSuccessListener {
+                                            activity?.let {
+                                                (activity as StartActivity).showFragment(
+                                                    R.id.container,
+                                                    ListLocationFragment(),
+                                                    false
+                                                )
+                                            }
+                                            Toast.makeText(
+                                                requireContext(),
+                                                "Location deleted",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
+                                        .addOnFailureListener { e ->
+                                            // Det uppstod ett fel när bilden skulle raderas
+                                        }
+                                }
+                                .addOnFailureListener { e ->
+                                    // Visa ett felmeddelande till användaren
+                                }
+                }
+                .show()
+        }
     }
 
     private fun setForShare(location: Location) {
@@ -375,39 +537,56 @@ class ShowLocationFragment : Fragment() {
     }
 
     private fun shareLocation() {
-        // Skapa en Google Maps länk
-        val googleMapsLink = "http://maps.google.com/maps?q=$lat,$long"
+
+        // Check if Google Maps app is installed
+        val mapsAppPackage = "com.google.android.apps.maps"
+        val mapsIntent = Intent(
+            Intent.ACTION_VIEW,
+            Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat%2C$long")
+        )
+        mapsIntent.setPackage(mapsAppPackage)
+
+        var googleMapsLink = ""
+        if (mapsIntent.resolveActivity(requireContext().packageManager) != null) {
+//             googleMapsLink = "geo:$lat,$long"
+            googleMapsLink = "https://www.google.com/maps/search/?api=1&query=$lat%2C$long"
+        } else {
+            googleMapsLink = "https://www.google.com/maps/search/?api=1&query=$lat%2C$long"
+        }
 
         val imageUri = imageLink
 
-        val shareString = "$titleLocationToShare - View it on Google Maps: \n$googleMapsLink"
+        val shareString = "$titleLocationToShare - View it on Google Maps: "
 
         val shareIntent = Intent().apply {
             action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_TEXT, shareString)
-            putExtra(Intent.EXTRA_STREAM, imageUri)
+            putExtra(Intent.EXTRA_TEXT, googleMapsLink)
+//            putExtra(Intent.EXTRA_TEXT, shareString)
+//            putExtra(Intent.EXTRA_STREAM, imageUri)
             type = "image/*"
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
+
         startActivity(Intent.createChooser(shareIntent, "Share via"))
     }
 
     private fun goBackStuff() {
-        when (SharedData.fragment) {
+        Log.d("!!!", "${SharedData.prevFragment}")
+        when (SharedData.prevFragment) {
             is MapsFragment -> {
-                (activity as StartActivity).showFragment(R.id.container, MapsFragment(), false)
-                addItemButton.show()
+                (activity as StartActivity).goBack(R.id.item_2, SharedData.prevFragment)
             }
 
             is ListLocationFragment -> {
-                (activity as StartActivity).goBack()
+                (activity as StartActivity).goBack(R.id.item_1, SharedData.prevFragment)
             }
 
             else -> {
-                (activity as StartActivity).goBack()
+                (activity as StartActivity).goBack(R.id.item_1, SharedData.prevFragment)
             }
         }
-        SharedData.fragment = null
+        addItemButton.show()
+
     }
 
     private fun setupThisFragment(fragmentact: FragmentActivity) {
@@ -450,7 +629,7 @@ class ShowLocationFragment : Fragment() {
         commentThis = view.findViewById(R.id.commentThis)
         commentButton = view.findViewById(R.id.commentButton)
 
-        viewsToFade = listOf(commentWrapText,commentThis)
+        viewsToFade = listOf(commentWrapText, commentThis)
 
     }
 }

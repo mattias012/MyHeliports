@@ -11,11 +11,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.Navigation.findNavController
+import com.bumptech.glide.Glide
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 
@@ -28,6 +30,7 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.navigation.NavigationBarView
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -66,7 +69,6 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
                     val marker = googleMap.addMarker(MarkerOptions().position(markerLatLng).title(locationName))
                     marker?.tag = location
                 }
-
             }
 
             val safeContext = context
@@ -89,8 +91,16 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
                 }
             }
         }
-        moveCameraToCurrentLocation()
 
+        val documentId = arguments?.getString("documentId")
+
+        if (documentId != null){
+
+            moveCameraToLocation(documentId)
+        }
+        else {
+            moveCameraToCurrentLocation()
+        }
     }
 
 
@@ -105,11 +115,13 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
 
         //Remember where user comes from
         SharedData.fragment = this
+        SharedData.prevFragment = this
 
         val view = inflater.inflate(R.layout.fragment_maps, container, false)
 
         //Setup menu
         topBarAndMenuSetup()
+//        setMenuItem(view)
 
         return view
     }
@@ -118,6 +130,36 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
         super.onViewCreated(view, savedInstanceState)
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment?
         mapFragment?.getMapAsync(callback)
+    }
+    private fun moveCameraToLocation(documentId: String){
+        if (documentId != null){
+            db.collection("locations").document(documentId).get()
+                .addOnSuccessListener { document ->
+
+                    val location = document.toObject(Location::class.java)
+                    location?.let {
+
+                        val currentLatLng = location.lat?.let { it1 -> location.long?.let { it2 ->
+                            LatLng(it1,
+                                it2
+                            )
+                        } }
+                        val cameraUpdate =
+                            currentLatLng?.let { it1 -> CameraUpdateFactory.newLatLngZoom(it1, 12f) }
+                        if (cameraUpdate != null) {
+                            googleMap.moveCamera(cameraUpdate)
+                        }
+
+                    } ?: run {
+                        Log.d("!!!", "No such document")
+                    }
+                }
+                .addOnFailureListener { exception ->
+                    Log.d("!!!", "GET failed with ", exception)
+                }
+
+            SharedData.prevFragment = this
+        }
     }
 
     private fun moveCameraToCurrentLocation() {
@@ -157,7 +199,7 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
         }
     }
 
-     fun checkPermissions(): Boolean {
+     private fun checkPermissions(): Boolean {
         return ContextCompat.checkSelfPermission(
             requireContext(),
             Manifest.permission.ACCESS_COARSE_LOCATION
@@ -246,7 +288,7 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
                             .setMessage("Browse the map, click on a marker to get more information of the location. At this time all users places are showed as a default setting.\n \n" +
                                     "If you get lost, hit the GPS icon to center map on your current location.")
                             .setNeutralButton("OK") { dialog, which ->
-                                // Respond to neutral button press
+
                             }
                             .show()
                         true
@@ -256,8 +298,47 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
                 }
             }
         }
+        //Override androids backbutton
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    goBackStuff()
+                }
+            })
     }
+//    private fun setMenuItem(view: View){
+//
+//        val bottomNavigation = view?.findViewById<NavigationBarView>(R.id.bottom_navigation)
+//        var isManuallySelected = false
+//
+//        isManuallySelected = true
+//        bottomNavigation?.selectedItemId = R.id.item_2
+//
+//        //Setup bottom menu
+//        activity?.let {
+//            bottomNavigation?.setOnNavigationItemSelectedListener { item ->
+//                if (isManuallySelected) {
+//                    isManuallySelected = false
+//                    return@setOnNavigationItemSelectedListener true
+//                }
+//            }
+//        }
+//    }
+    private fun goBackStuff() {
 
+        (activity as StartActivity).goBack(null, null)
+        addItemButton.show()
+
+    }
+//    private fun bottomMenu(itemSelected: Int?, view: View){
+//
+//        val bottomNavigation = view?.findViewById<NavigationBarView>(R.id.bottom_navigation)
+//
+//        if(itemSelected != null){
+//            bottomNavigation?.selectedItemId = itemSelected
+//        }
+//    }
     override fun onLinkClicked(documentId: String) {
         //Navigate to ShowLocation with documentId
         parentFragmentManager.beginTransaction()

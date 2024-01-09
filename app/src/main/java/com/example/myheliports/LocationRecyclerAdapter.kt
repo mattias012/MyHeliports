@@ -1,6 +1,7 @@
 package com.example.myheliports
 
 import android.content.Context
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,12 +9,16 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.google.android.material.button.MaterialButton
 
-class LocationRecyclerAdapter(private val context: Context, private val locationList: List<Location>) :
+class LocationRecyclerAdapter(private val context: Context, private val locationList: List<Location>, private val onMapClickListener: OnMapClickListener) :
     RecyclerView.Adapter<LocationRecyclerAdapter.ViewHolder>() {
 
     private var layoutInflater = LayoutInflater.from(context)
 
+    interface OnMapClickListener {
+        fun onMapClick(documentId: String)
+    }
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
@@ -31,25 +36,23 @@ class LocationRecyclerAdapter(private val context: Context, private val location
         holder.itemView.setOnClickListener {
             val documentId = it.tag as String
             //Remember last position in list
+            Log.d("!!!", "onBindViewHolder position: $position")
             SharedData.position = position
             (it.context as StartActivity).showLocationFragment(documentId)
         }
-//        holder.descriptionView?.text = location.description
-//
-//        val date = location.dateOfPhoto?.toDate()
-//        val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-//        val dateString = format.format(date)
-//
-//        holder.dateView?.text = dateString
 
+        holder.viewOnMap.text = "Map"
+        holder.viewOnMap.tag = location.documentId
+        holder.viewOnMap.setOnClickListener {
+            val documentId = it.tag as String
+            onMapClickListener.onMapClick(documentId)
+        }
 
         if(location.imageLink != null) {
             Glide.with(holder.itemView.context).load(location.imageLink).into(holder.imageView)
         } else {
             holder.imageView?.setImageResource(R.drawable.default1)
         }
-
-
     }
 
     override fun getItemCount(): Int {
@@ -58,9 +61,10 @@ class LocationRecyclerAdapter(private val context: Context, private val location
 
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var titleView: TextView? = itemView.findViewById<TextView>(R.id.titleView)
+        var titleView: TextView? = itemView.findViewById<TextView>(R.id.titleViewUser)
 //        var descriptionView: TextView? = itemView.findViewById<TextView>(R.id.descriptionView)
 //        var dateView: TextView? = itemView.findViewById<TextView>(R.id.dateView)
-        var imageView: ImageView = itemView.findViewById<ImageView>(R.id.imageView)
+        var imageView: ImageView = itemView.findViewById<ImageView>(R.id.imageViewUser)
+        var viewOnMap: MaterialButton = itemView.findViewById<MaterialButton>(R.id.viewLocationOnMap)
     }
 }

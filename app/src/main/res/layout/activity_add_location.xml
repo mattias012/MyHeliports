@@ -30,7 +30,7 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <ImageView
-        android:id="@+id/imageView"
+        android:id="@+id/imageViewUser"
         android:layout_width="333dp"
         android:layout_height="249dp"
         android:layout_marginTop="16dp"
@@ -52,7 +52,7 @@
         app:endIconMode="clear_text"
         app:layout_constraintEnd_toStartOf="@+id/dateOfPhotoView"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageView">
+        app:layout_constraintTop_toBottomOf="@+id/imageViewUser">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/nameOfLocation"
@@ -75,7 +75,7 @@
     app:errorEnabled="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/nameOfLocationView"
-        app:layout_constraintTop_toBottomOf="@+id/imageView">
+        app:layout_constraintTop_toBottomOf="@+id/imageViewUser">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/dateOfPhoto"

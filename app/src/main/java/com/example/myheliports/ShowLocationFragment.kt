@@ -292,8 +292,9 @@ class ShowLocationFragment : Fragment() {
         commentThis.setText("")
 
         if (user == null) {
-            // Visa ett felmeddelande eller på annat sätt hantera situationen
-            Log.w("!!!", "User not signed in")
+            //If for some reason user is not signed in, send to main.
+            val intent = Intent(requireContext(), MainActivity::class.java)
+            startActivity(intent)
         } else {
             //Create Comment Object
             val comment = Comment(
@@ -318,7 +319,6 @@ class ShowLocationFragment : Fragment() {
                     fadeViews(viewsToFade, false)
                     commentButton.isEnabled = true
                 }
-
         }
     }
 
@@ -440,14 +440,31 @@ class ShowLocationFragment : Fragment() {
                     user?.let {
 
                         // Set date added of location to the by line
-                        val date = location.timestamp?.toDate()
-                        val format = SimpleDateFormat(
-                            "yyyy-MM-dd HH:mm",
-                            Locale.getDefault()
-                        )
-                        val dateString = format.format(date)
+                        var dateString = ""
+                        if (location.timestamp != null) {
+                            val date = location.timestamp?.toDate()
+                            val format = SimpleDateFormat(
+                                "yyyy-MM-dd HH:mm",
+                                Locale.getDefault()
+                            )
+                             dateString = format.format(date)
+                        }
+
+                        var dateStringEdited = ""
+                        if (location.lastEdit != null) {
+                            val dateEdit = location.lastEdit?.toDate()
+                            val formatEdit = SimpleDateFormat(
+                                "yyyy-MM-dd HH:mm",
+                                Locale.getDefault()
+                            )
+                             dateStringEdited = formatEdit.format(dateEdit)
+                        }
 
                         addedByUser.text = "by ${user.userName} on $dateString"
+
+                        if (dateStringEdited != dateString){
+                            addedByUser.text = "by ${user.userName} on $dateString, edited on $dateStringEdited"
+                        }
                     }
                 }
             }

@@ -46,8 +46,10 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.storage.FirebaseStorage
 import java.io.ByteArrayOutputStream
+import java.time.Instant
 import java.util.*
 
 
@@ -512,7 +514,7 @@ class AddLocationActivity : AppCompatActivity() {
         val latDouble = lat.toDouble()
         val longDouble = long.toDouble()
 
-        rating = ratingView.numStars
+        rating = ratingView.rating.toInt()
 
         //In case of a new location
         if (documentId == null) {
@@ -579,13 +581,14 @@ class AddLocationActivity : AppCompatActivity() {
             }
         }
     }
+
     private fun updateLocationData(documentId: String, latDouble: Double, longDouble: Double, imageUrl: String?) {
 
         val docRef = db.collection("locations").document(documentId)
 
         if (imageUrl != null)
         docRef
-            .update("name", nameOfLocation.text.toString(), "dateOfPhoto", dateOfPhotoTimestamp, "description", descriptionOfLocation.text.toString(), "rating", rating, "lat", latDouble, "long", longDouble, "lastEdit", null, "imageLink", imageUrl)
+            .update("name", nameOfLocation.text.toString(), "dateOfPhoto", dateOfPhotoTimestamp, "description", descriptionOfLocation.text.toString(), "rating", ratingView.rating.toInt(), "lat", latDouble, "long", longDouble, "lastEdit", FieldValue.serverTimestamp(), "imageLink", imageUrl)
 
             .addOnSuccessListener {
                 Log.d("!!!", "DocumentSnapshot successfully updated!")
@@ -594,7 +597,7 @@ class AddLocationActivity : AppCompatActivity() {
             .addOnFailureListener { e -> Log.w("!!!", "Error updating document", e) }
         else {
             docRef
-                .update("name", nameOfLocation.text.toString(), "dateOfPhoto", dateOfPhotoTimestamp, "description", descriptionOfLocation.text.toString(), "rating", rating, "lat", latDouble, "long", longDouble, "lastEdit", null)
+                .update("name", nameOfLocation.text.toString(), "dateOfPhoto", dateOfPhotoTimestamp, "description", descriptionOfLocation.text.toString(), "rating", ratingView.rating.toInt(), "lat", latDouble, "long", longDouble, "lastEdit", FieldValue.serverTimestamp())
 
                 .addOnSuccessListener {
                     Log.d("!!!", "DocumentSnapshot successfully updated!")

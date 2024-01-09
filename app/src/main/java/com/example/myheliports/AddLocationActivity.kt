@@ -424,9 +424,6 @@ class AddLocationActivity : AppCompatActivity() {
         longDouble: Double
     ): Task<Uri> {
 
-//        if (uri != defaultFileUri) {
-        //if not standard file it means that user HAS changed the photo and we need to upload it
-
         val storageRef = storage.reference.child("images/$fileName")
 
         val inputStream = contentResolver.openInputStream(uri)
@@ -487,9 +484,6 @@ class AddLocationActivity : AppCompatActivity() {
             }
             storageRef.downloadUrl
         }
-//        }
-//
-//        return Tasks.forResult(uri)
     }
 
     private fun saveLocation(documentId: String?) {

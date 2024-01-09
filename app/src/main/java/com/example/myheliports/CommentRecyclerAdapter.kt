@@ -6,6 +6,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class CommentRecyclerAdapter(private val context: Context, private val commentList: List<Comment>) :
     RecyclerView.Adapter<CommentRecyclerAdapter.ViewHolder>() {
@@ -25,7 +29,9 @@ class CommentRecyclerAdapter(private val context: Context, private val commentLi
         val comment = commentList[position]
 
         holder.comment?.text = comment.comment
-//        holder.itemView.tag = comment.documentId
+        getUserName(comment.userId) { userName ->
+            holder.commentDateAndUserName?.text = userName
+        }
 
     }
 
@@ -36,6 +42,23 @@ class CommentRecyclerAdapter(private val context: Context, private val commentLi
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var comment: TextView? = itemView.findViewById<TextView>(R.id.commentByUser)
+        var commentDateAndUserName: TextView? = itemView.findViewById(R.id.commentDateAndUserName)
+    }
+    private fun getUserName(userId: String?, callback: (String) -> Unit) {
+        val db = Firebase.firestore
 
+        db.collection("users").whereEqualTo("userId", userId).get()
+            .addOnSuccessListener { userDocument ->
+                //Handle on success
+                if (!userDocument.isEmpty) {
+                    val document = userDocument.documents[0]
+                    // Convert to a User object
+                    val user = document.toObject(User::class.java)
+                    user?.let {
+                        // Call the callback function with the username
+                        it.userName?.let { it1 -> callback(it1) }
+                    }
+                }
+            }
     }
 }

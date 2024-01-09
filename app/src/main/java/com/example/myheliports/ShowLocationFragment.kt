@@ -60,6 +60,7 @@ class ShowLocationFragment : Fragment() {
 
     private lateinit var materialDividerComments2: MaterialDivider
     private lateinit var commentTextView: TextView
+    private lateinit var commentDateAndUser: TextView
     private lateinit var recyclerViewComments: RecyclerView
     private lateinit var commentWrapText: TextInputLayout
     private lateinit var commentThis: TextInputEditText
@@ -628,6 +629,7 @@ class ShowLocationFragment : Fragment() {
         commentWrapText = view.findViewById(R.id.commentWrapTextView)
         commentThis = view.findViewById(R.id.commentThis)
         commentButton = view.findViewById(R.id.commentButton)
+        commentDateAndUser = view.findViewById(R.id.commentDateAndUserName)
 
         viewsToFade = listOf(commentWrapText, commentThis)
 

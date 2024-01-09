@@ -45,6 +45,9 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/email"
+            android:singleLine="true"
+            android:nextFocusDown="@id/password"
+            android:imeOptions="actionDone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
@@ -68,6 +71,9 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/password"
+            android:singleLine="true"
+            android:imeOptions="actionDone"
+            android:nextFocusDown="@id/loginButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 

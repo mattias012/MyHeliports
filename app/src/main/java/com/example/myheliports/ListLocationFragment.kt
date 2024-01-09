@@ -39,7 +39,7 @@ class ListLocationFragment : Fragment() {
     //standard setting is grid view
     var columnsInGrid = 2
     var position = 0
-    var getAll = true
+    var getAll = false
 
     private var safeContext: Context? = null
 
@@ -65,7 +65,6 @@ class ListLocationFragment : Fragment() {
         val context = context
         if (context != null) {
             recyclerView.layoutManager = GridLayoutManager(context, columnsInGrid)
-//            recyclerView.layoutManager = GridLayoutManager(safeContext, columnsInGrid)
         }
 
         progressBar = view.findViewById(R.id.progressBar)

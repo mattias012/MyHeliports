@@ -60,7 +60,6 @@ class UserRecyclerAdapter(private val context: Context, private val userList: Li
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var titleView: TextView? = itemView.findViewById<TextView>(R.id.titleViewUser)
-//        var descriptionView: TextView? = itemView.findViewById<TextView>(R.id.descriptionView)
         var joinedViewUser: TextView? = itemView.findViewById<TextView>(R.id.joinedViewUser)
         var imageView: ImageView = itemView.findViewById<ImageView>(R.id.imageViewUser)
     }

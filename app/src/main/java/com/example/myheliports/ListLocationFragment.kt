@@ -266,7 +266,7 @@ class ListLocationFragment : Fragment() {
                 Toast.LENGTH_SHORT
             ).show()
         }
-        progressBar.visibility = View.GONE  // Stoppa ProgressBar om det finns ett fel
+        progressBar.visibility = View.GONE
     }
 
     private fun updateLocations(snapshots: List<DocumentSnapshot>?) {

@@ -343,39 +343,12 @@ class MapsFragment : Fragment(), MarkerInfoWindowAdapter.OnInfoWindowElemTouchLi
             })
     }
 
-    //    private fun setMenuItem(view: View){
-//
-//        val bottomNavigation = view?.findViewById<NavigationBarView>(R.id.bottom_navigation)
-//        var isManuallySelected = false
-//
-//        isManuallySelected = true
-//        bottomNavigation?.selectedItemId = R.id.item_2
-//
-//        //Setup bottom menu
-//        activity?.let {
-//            bottomNavigation?.setOnNavigationItemSelectedListener { item ->
-//                if (isManuallySelected) {
-//                    isManuallySelected = false
-//                    return@setOnNavigationItemSelectedListener true
-//                }
-//            }
-//        }
-//    }
     private fun goBackStuff() {
 
         (activity as StartActivity).goBack(null, null)
         addItemButton.show()
 
     }
-
-    //    private fun bottomMenu(itemSelected: Int?, view: View){
-//
-//        val bottomNavigation = view?.findViewById<NavigationBarView>(R.id.bottom_navigation)
-//
-//        if(itemSelected != null){
-//            bottomNavigation?.selectedItemId = itemSelected
-//        }
-//    }
     override fun onLinkClicked(documentId: String) {
         //Navigate to ShowLocation with documentId
         parentFragmentManager.beginTransaction()

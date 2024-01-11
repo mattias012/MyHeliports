@@ -13,7 +13,7 @@ class MarkerInfoWindowAdapter(private val context: Context, private val listener
         // 1. Get tag
         val location = p0?.tag as? Location ?: return null
 
-        // 2. Inflate view and set title, address, and rating
+        // 2. Inflate view
         val view = LayoutInflater.from(context).inflate(R.layout.marker_info_contents, null)
 
         view.findViewById<TextView>(R.id.text_view_title).text = location.name

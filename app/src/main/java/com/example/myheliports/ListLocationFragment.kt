@@ -3,6 +3,8 @@ package com.example.myheliports
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -12,6 +14,10 @@ import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
@@ -36,12 +42,21 @@ class ListLocationFragment : Fragment() {
     private lateinit var db: FirebaseFirestore
     private lateinit var auth: FirebaseAuth
 
+
     //standard setting is grid view
     var columnsInGrid = 2
     var position = 0
-    var getAll = true
+    var getAll = false
 
     private var safeContext: Context? = null
+    private var badgeUpdater: BadgeUpdater? = null
+    private lateinit var viewModel: MyViewModel
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        badgeUpdater = context as? BadgeUpdater
+    }
+
 
     override fun onCreateView(
 
@@ -59,13 +74,18 @@ class ListLocationFragment : Fragment() {
         SharedData.fragment = this
         SharedData.prevFragment = this
 
+        viewModel = ViewModelProvider(this)[MyViewModel::class.java]
+
         val view = inflater.inflate(R.layout.fragment_listlocation, container, false)
         recyclerView = view.findViewById(R.id.listOfLocationView)
 
         val context = context
         if (context != null) {
             recyclerView.layoutManager = GridLayoutManager(context, columnsInGrid)
-//            recyclerView.layoutManager = GridLayoutManager(safeContext, columnsInGrid)
+        }
+
+        if (!getAll){
+            observeList()
         }
 
         progressBar = view.findViewById(R.id.progressBar)
@@ -93,11 +113,13 @@ class ListLocationFragment : Fragment() {
                         toggleViewMode(1)
                         true
                     }
+
                     R.id.person -> {
 
                         getAllData(columnsInGrid, false)
                         true
                     }
+
                     R.id.group -> {
 
                         getAllData(columnsInGrid, true)
@@ -108,32 +130,64 @@ class ListLocationFragment : Fragment() {
                 }
             }
         }
+
         setupTextWatcher(searchText)
 
         //First search, show only your own places
-            searchDataBase("", false)
+        searchDataBase("", false)
 
-            //Set to adapter
-            if (safeContext != null) {
-                val adapter = LocationRecyclerAdapter(requireContext(), locationList, object :
-                    LocationRecyclerAdapter.OnMapClickListener {
-                    override fun onMapClick(documentId: String) {
-                        (activity as? StartActivity)?.showMapsFragment(documentId)
-                    }
-                })
+        //Set to adapter
+        if (safeContext != null) {
+            val adapter = LocationRecyclerAdapter(requireContext(), locationList, object :
+                LocationRecyclerAdapter.OnMapClickListener {
+                override fun onMapClick(documentId: String) {
+                    (activity as? StartActivity)?.showMapsFragment(documentId)
+                }
+            })
 
-                recyclerView.adapter = adapter
-                recyclerView.smoothScrollToPosition(SharedData.position)
-            }
+            recyclerView.adapter = adapter
+            recyclerView.smoothScrollToPosition(SharedData.position)
+        }
 
         return view
     }
 
-    private fun getAllData(numberOfColumns: Int, allData: Boolean){
+    private fun observeList(){
+        viewModel.locationListLiveData.observe(viewLifecycleOwner, Observer { locations ->
+            val newSize = locations.size
+            val difference = newSize - viewModel.oldSize
+
+            if (difference > 0) {
+
+                Handler(Looper.getMainLooper()).postDelayed({
+                    badgeUpdater?.updateBadge(difference)
+                }, 1000)
+
+            } else {
+                badgeUpdater?.removeBadge()
+            }
+            viewModel.oldSize = newSize
+        })
+
+    }
+    private fun updateBadgeIfThisFragmentIsShown() {
+//        viewModel.oldSize = 0
+//        viewModel.locationListLiveData.value = locationList
+
+        Log.d("!!!", "locationListSize: ${locationList.size} och old:")
+        viewModel.locationListLiveData.value = locationList
+        viewModel.oldSize = locationList.size
+        badgeUpdater?.removeBadge()
+
+    }
+
+    private fun getAllData(numberOfColumns: Int, allData: Boolean) {
         if (safeContext != null) {
             getAll = allData
             searchDataBase("", allData)
             recyclerView.layoutManager = GridLayoutManager(requireContext(), numberOfColumns)
+
+            updateBadgeIfThisFragmentIsShown()
 
             //Update adapter
             recyclerView.adapter?.notifyDataSetChanged()
@@ -141,10 +195,10 @@ class ListLocationFragment : Fragment() {
             columnsInGrid = numberOfColumns
         }
     }
+
     private fun toggleViewMode(columns: Int) {
 
         //New layoutmanager with number of columns
-        //
         if (safeContext != null) {
             recyclerView.layoutManager = GridLayoutManager(requireContext(), columns)
 
@@ -172,7 +226,7 @@ class ListLocationFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        //Start progresBar
+        //Start progressBar
 //        progressBar.visibility = View.VISIBLE
 
         searchText.setText("")
@@ -212,11 +266,12 @@ class ListLocationFragment : Fragment() {
                 Toast.LENGTH_SHORT
             ).show()
         }
-        progressBar.visibility = View.GONE  // Stoppa ProgressBar om det finns ett fel
+        progressBar.visibility = View.GONE
     }
 
     private fun updateLocations(snapshots: List<DocumentSnapshot>?) {
         locationList.clear()
+//        viewModel.oldSize = viewModel.locationListLiveData.value?.size ?: 0
         if (snapshots != null) {
             for (document in snapshots) {
                 val location = document.toObject(Location::class.java)
@@ -224,7 +279,11 @@ class ListLocationFragment : Fragment() {
                     locationList.add(location)
                 }
             }
+            SharedData.previousSnapshotCount = locationList.size
         }
+
+//        viewModel.getAllPlacesAtLogin()
+
         //Update adapter with changes
         recyclerView.adapter?.notifyDataSetChanged()
 
@@ -238,16 +297,14 @@ class ListLocationFragment : Fragment() {
         Log.d("!!!", "searching for this name")
         val query = if (searchThisString.isNullOrEmpty()) {
 
-            if(getAll) {
+            if (getAll) {
                 db.collection("locations").orderBy("timestamp", Query.Direction.DESCENDING)
-            }
-            else {
-                val user =  auth.currentUser
+            } else {
+                val user = auth.currentUser
                 if (user != null) {
                     db.collection("locations").whereEqualTo("userId", user.uid)
                         .orderBy("timestamp", Query.Direction.DESCENDING)
-                }
-                else {
+                } else {
                     db.collection("locations").orderBy("timestamp", Query.Direction.DESCENDING)
                 }
             }
@@ -257,13 +314,12 @@ class ListLocationFragment : Fragment() {
                 db.collection("locations").orderBy("name").startAt(searchThisString)
                     .endAt(searchThisString + "\uf8ff")
             } else {
-                val user =  auth.currentUser
-                if (user !=null) {
+                val user = auth.currentUser
+                if (user != null) {
                     db.collection("locations").whereEqualTo("userId", user.uid).orderBy("name")
                         .startAt(searchThisString)
                         .endAt(searchThisString + "\uf8ff")
-                }
-                else {
+                } else {
                     db.collection("locations").orderBy("name").startAt(searchThisString)
                         .endAt(searchThisString + "\uf8ff")
                 }

@@ -60,10 +60,6 @@ class AddLocationActivity : AppCompatActivity() {
         private const val REQUEST_ALL_PERMISSIONS = 100
         private const val REQUEST_GALLERY = 200
         private const val REQUEST_CAMERA = 300
-        private const val REQUEST_MEDIA_LOCATION = 400
-        private const val REQUEST_READ = 500
-        private const val REQUEST_WRITE = 600
-
     }
 
     private lateinit var db: FirebaseFirestore
@@ -292,17 +288,17 @@ class AddLocationActivity : AppCompatActivity() {
     }
 
     private fun showImagePickerDialog() {
-        // Create an array of options (camera and gallery)
+        //Create an array of options (camera and gallery)
         val options = arrayOf("Take Photo", "Choose from Gallery", "Cancel")
 
-        // Create a dialog
+        //Create a dialog
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Choose an option")
         builder.setItems(options) { dialog, which ->
             when (which) {
-                0 -> openCamera() // Take Photo
-                1 -> openGallery() // Choose from Gallery
-                2 -> dialog.dismiss() // Cancel
+                0 -> openCamera() //Take Photo
+                1 -> openGallery() //Choose from Gallery
+                2 -> dialog.dismiss() //Cancel
             }
         }
 
@@ -336,7 +332,7 @@ class AddLocationActivity : AppCompatActivity() {
             put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/MyAppImages")
         }
 
-        // Skapa en ny fil i MediaStore och få dess URI.
+        //Create a new file and get the Uri
         val uri =
             contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
 
@@ -424,9 +420,6 @@ class AddLocationActivity : AppCompatActivity() {
         longDouble: Double
     ): Task<Uri> {
 
-//        if (uri != defaultFileUri) {
-        //if not standard file it means that user HAS changed the photo and we need to upload it
-
         val storageRef = storage.reference.child("images/$fileName")
 
         val inputStream = contentResolver.openInputStream(uri)
@@ -487,17 +480,14 @@ class AddLocationActivity : AppCompatActivity() {
             }
             storageRef.downloadUrl
         }
-//        }
-//
-//        return Tasks.forResult(uri)
     }
 
     private fun saveLocation(documentId: String?) {
 
         saveLocationButton.isEnabled = false
 
-        val lat = latOfLocation.text.toString()
-        val long = longOfLocation.text.toString()
+        val lat = latOfLocation.text?.trim().toString()
+        val long = longOfLocation.text?.trim().toString()
 
         val checkCoordinates = checkLatLong(lat, long)
 
@@ -588,7 +578,7 @@ class AddLocationActivity : AppCompatActivity() {
 
         if (imageUrl != null)
         docRef
-            .update("name", nameOfLocation.text.toString(), "dateOfPhoto", dateOfPhotoTimestamp, "description", descriptionOfLocation.text.toString(), "rating", ratingView.rating.toInt(), "lat", latDouble, "long", longDouble, "lastEdit", FieldValue.serverTimestamp(), "imageLink", imageUrl)
+            .update("name", nameOfLocation.text?.trim().toString(), "dateOfPhoto", dateOfPhotoTimestamp, "description", descriptionOfLocation.text?.trim().toString(), "rating", ratingView.rating.toInt(), "lat", latDouble, "long", longDouble, "lastEdit", FieldValue.serverTimestamp(), "imageLink", imageUrl)
 
             .addOnSuccessListener {
                 Log.d("!!!", "DocumentSnapshot successfully updated!")
@@ -597,7 +587,7 @@ class AddLocationActivity : AppCompatActivity() {
             .addOnFailureListener { e -> Log.w("!!!", "Error updating document", e) }
         else {
             docRef
-                .update("name", nameOfLocation.text.toString(), "dateOfPhoto", dateOfPhotoTimestamp, "description", descriptionOfLocation.text.toString(), "rating", ratingView.rating.toInt(), "lat", latDouble, "long", longDouble, "lastEdit", FieldValue.serverTimestamp())
+                .update("name", nameOfLocation.text?.trim().toString(), "dateOfPhoto", dateOfPhotoTimestamp, "description", descriptionOfLocation.text?.trim().toString(), "rating", ratingView.rating.toInt(), "lat", latDouble, "long", longDouble, "lastEdit", FieldValue.serverTimestamp())
 
                 .addOnSuccessListener {
                     Log.d("!!!", "DocumentSnapshot successfully updated!")
@@ -617,9 +607,9 @@ class AddLocationActivity : AppCompatActivity() {
         } else {
             //Create Location Object
             val location = Location(
-                name = nameOfLocation.text.toString(),
+                name = nameOfLocation.text?.trim().toString(),
                 dateOfPhoto = dateOfPhotoTimestamp,
-                description = descriptionOfLocation.text.toString(),
+                description = descriptionOfLocation.text?.trim().toString(),
                 lat = latDouble,
                 long = longDouble,
                 rating = rating,

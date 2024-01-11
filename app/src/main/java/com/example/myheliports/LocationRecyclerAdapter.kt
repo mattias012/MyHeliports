@@ -62,8 +62,6 @@ class LocationRecyclerAdapter(private val context: Context, private val location
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var titleView: TextView? = itemView.findViewById<TextView>(R.id.titleViewUser)
-//        var descriptionView: TextView? = itemView.findViewById<TextView>(R.id.descriptionView)
-//        var dateView: TextView? = itemView.findViewById<TextView>(R.id.dateView)
         var imageView: ImageView = itemView.findViewById<ImageView>(R.id.imageViewUser)
         var viewOnMap: MaterialButton = itemView.findViewById<MaterialButton>(R.id.viewLocationOnMap)
     }

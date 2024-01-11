@@ -60,6 +60,7 @@ class ShowLocationFragment : Fragment() {
 
     private lateinit var materialDividerComments2: MaterialDivider
     private lateinit var commentTextView: TextView
+    private lateinit var commentDateAndUser: TextView
     private lateinit var recyclerViewComments: RecyclerView
     private lateinit var commentWrapText: TextInputLayout
     private lateinit var commentThis: TextInputEditText
@@ -445,7 +446,7 @@ class ShowLocationFragment : Fragment() {
                                 "yyyy-MM-dd HH:mm",
                                 Locale.getDefault()
                             )
-                             dateString = format.format(date)
+                            dateString = format.format(date)
                         }
 
                         var dateStringEdited = ""
@@ -455,13 +456,14 @@ class ShowLocationFragment : Fragment() {
                                 "yyyy-MM-dd HH:mm",
                                 Locale.getDefault()
                             )
-                             dateStringEdited = formatEdit.format(dateEdit)
+                            dateStringEdited = formatEdit.format(dateEdit)
                         }
 
                         addedByUser.text = "by ${user.userName} on $dateString"
 
-                        if (dateStringEdited != dateString){
-                            addedByUser.text = "by ${user.userName} on $dateString, edited on $dateStringEdited"
+                        if (dateStringEdited != dateString) {
+                            addedByUser.text =
+                                "by ${user.userName} on $dateString, edited on $dateStringEdited"
                         }
                     }
                 }
@@ -472,58 +474,57 @@ class ShowLocationFragment : Fragment() {
 
         val imageLinked = getLocationImage(documentId) { imageLink ->
 
-
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Delete this location")
                 .setMessage("Are you sure you want to delete this location and all data attached to it?")
                 .setNeutralButton("Cancel") { dialog, which ->
-                    // Respond to neutral button press
+
                 }
                 .setPositiveButton("Yes, I want to delete this location") { dialog, which ->
                     //Delete the location and comments and images related to this place
 
+                    val batch = db.batch()
 
-                            val batch = db.batch()
+                    val locationRef = db.collection("locations").document(documentId)
+                    batch.delete(locationRef)
 
-                            val locationRef = db.collection("locations").document(documentId)
-                            batch.delete(locationRef)
+                    db.collection("comments").whereEqualTo("locationId", documentId).get()
+                        .addOnSuccessListener { documents ->
+                            for (document in documents) {
+                                batch.delete(document.reference)
+                            }
+                        }
 
-                            db.collection("comments").whereEqualTo("locationId", documentId).get()
-                                .addOnSuccessListener { documents ->
-                                    for (document in documents) {
-                                        batch.delete(document.reference)
-                                    }
-                                }
+                    //Run the batch
+                    batch.commit()
+                        .addOnSuccessListener {
+                            val storage = Firebase.storage
 
-                            // Kör batchen
-                            batch.commit()
+                            val imageRef = storage.getReferenceFromUrl(imageLink)
+
+                            imageRef.delete()
                                 .addOnSuccessListener {
-                                    val storage = Firebase.storage
-
-                                    val imageRef = storage.getReferenceFromUrl(imageLink)
-
-                                    imageRef.delete()
-                                        .addOnSuccessListener {
-                                            activity?.let {
-                                                (activity as StartActivity).showFragment(
-                                                    R.id.container,
-                                                    ListLocationFragment(),
-                                                    false
-                                                )
-                                            }
-                                            Toast.makeText(
-                                                requireContext(),
-                                                "Location deleted",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                        }
-                                        .addOnFailureListener { e ->
-                                            // Det uppstod ett fel när bilden skulle raderas
-                                        }
+                                    activity?.let {
+                                        (activity as StartActivity).showFragment(
+                                            R.id.container,
+                                            ListLocationFragment(),
+                                            false
+                                        )
+                                        (activity as StartActivity).setupTopBar()
+                                    }
+                                    Toast.makeText(
+                                        requireContext(),
+                                        "Location deleted",
+                                        Toast.LENGTH_LONG
+                                    ).show()
                                 }
                                 .addOnFailureListener { e ->
-                                    // Visa ett felmeddelande till användaren
+                                    //Error on delete?
                                 }
+                        }
+                        .addOnFailureListener { e ->
+                            //Show error message
+                        }
                 }
                 .show()
         }
@@ -628,6 +629,7 @@ class ShowLocationFragment : Fragment() {
         commentWrapText = view.findViewById(R.id.commentWrapTextView)
         commentThis = view.findViewById(R.id.commentThis)
         commentButton = view.findViewById(R.id.commentButton)
+        commentDateAndUser = view.findViewById(R.id.commentDateAndUserName)
 
         viewsToFade = listOf(commentWrapText, commentThis)
 

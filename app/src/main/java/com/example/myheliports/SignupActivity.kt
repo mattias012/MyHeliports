@@ -1,15 +1,22 @@
 package com.example.myheliports
 
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
@@ -28,6 +35,7 @@ class SignupActivity : AppCompatActivity() {
     private lateinit var passwordSignUpView: TextInputLayout
     private lateinit var confirmPasswordSignUpView: TextInputLayout
     private lateinit var signupButton: Button
+    private lateinit var backToLogin: TextView
 
     private lateinit var userNameSignUp: TextInputEditText
     private lateinit var emailSignUp: TextInputEditText
@@ -45,8 +53,13 @@ class SignupActivity : AppCompatActivity() {
 
         initilizeViews()
 
+
+        setupTextWatcher(emailSignUp)
+        setupTextWatcher(passwordSignUp)
+        setupTextWatcher(confirmPasswordSignUp)
+
         userNameSignUp.setOnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus) { // Om fokus tas bort från fältet
+            if (!hasFocus) {
                 val userName = userNameSignUp.text.toString()
                 getUserName(userName) { userExists ->
                     if (userExists) {
@@ -60,13 +73,54 @@ class SignupActivity : AppCompatActivity() {
                 }
             }
         }
-
-        setupTextWatcher(emailSignUp)
-        setupTextWatcher(passwordSignUp)
-        setupTextWatcher(confirmPasswordSignUp)
+        userNameSignUp.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                hideKeyboard()
+                emailSignUp.requestFocus()
+                return@setOnEditorActionListener true
+            }
+            false
+        }
+        emailSignUp.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                hideKeyboard()
+                passwordSignUp.requestFocus()
+                return@setOnEditorActionListener true
+            }
+            false
+        }
+        passwordSignUp.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                hideKeyboard()
+                confirmPasswordSignUp.requestFocus()
+                return@setOnEditorActionListener true
+            }
+            false
+        }
+        confirmPasswordSignUp.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_UP) {
+                hideKeyboard()
+                return@setOnKeyListener true
+            }
+            false
+        }
 
         signupButton.setOnClickListener {
             signUp()
+        }
+        backToLogin.setOnClickListener {
+            finish()
+        }
+    }
+    private fun Activity.hideKeyboard() {
+        val inputMethodManager =
+            getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+        val currentFocusedView = currentFocus
+        currentFocusedView?.let {
+            inputMethodManager?.hideSoftInputFromWindow(
+                it.windowToken,
+                InputMethodManager.HIDE_IMPLICIT_ONLY
+            )
         }
     }
 
@@ -139,10 +193,10 @@ class SignupActivity : AppCompatActivity() {
 
     private fun signUp() {
 
-        val email = emailSignUp.text.toString()
+        val email = emailSignUp.text?.trim().toString()
         val password = passwordSignUp.text.toString()
         val confirmPassword = confirmPasswordSignUp.text.toString()
-        val userName = userNameSignUp.text.toString()
+        val userName = userNameSignUp.text?.trim().toString()
 
         if (email.isEmpty()) {
             return
@@ -215,6 +269,9 @@ class SignupActivity : AppCompatActivity() {
         passwordSignUpView = findViewById(R.id.passwordSignUpView)
         confirmPasswordSignUpView = findViewById(R.id.confirmPasswordSignUpView)
         signupButton = findViewById(R.id.signUpButton)
+
+        backToLogin = findViewById(R.id.backToLogin)
+
 
         userNameSignUp = findViewById(R.id.userNameSignUp)
         emailSignUp = findViewById(R.id.emailSignUp)

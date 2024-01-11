@@ -79,6 +79,7 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/dateOfPhoto"
+            android:inputType="date"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
@@ -120,6 +121,7 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/latOfLocation"
+            android:inputType="numberDecimal|numberSigned"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
@@ -141,6 +143,7 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/longOfLocation"
+            android:inputType="numberDecimal|numberSigned"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
